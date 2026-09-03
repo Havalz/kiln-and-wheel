@@ -1,0 +1,114 @@
+- !<AssetImportMetadata/edbbd6cf-47c7-4f82-9cb7-713df897471c>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 10fe492c-7520-45bd-92bd-8b4934d463cb
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 10fe492c-7520-45bd-92bd-8b4934d463cb
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> d59c9d6c-c890-47f6-aeea-ba6c413b3d75
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/d59c9d6c-c890-47f6-aeea-ba6c413b3d75>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 97f7d87f-d5f3-469a-8c59-214ba121b124
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    buttonBorder: false
+    buttonBorderHot: false
+    buttonFill: false
+    buttonHot: false
+    glazeFill: false
+    glazeTitle: false
+    kilnFill: false
+    kilnTitle: false
+    panelEdge: false
+    sliderFill: false
+    sliderKnob: false
+    sliderTrack: false
+    stationDistance: false
+    stationHeight: false
+    stationSpreadDeg: false
+    textPrimary: false
+    textSecondary: false
+    textValue: false
+    wheelFill: false
+    wheelPanelPitchDeg: false
+    wheelTitle: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - stationDistance: !<float> 45.000000
+      stationSpreadDeg: !<float> 60.000000
+      stationHeight: !<float> -19.000000
+      wheelPanelPitchDeg: !<float> 24.000000
+      wheelFill: !<Vec4> {x: 1.000000, y: 0.720000, z: 0.340000, w: 0.340000}
+      glazeFill: !<Vec4> {x: 0.380000, y: 0.900000, z: 1.000000, w: 0.320000}
+      kilnFill: !<Vec4> {x: 1.000000, y: 0.520000, z: 0.400000, w: 0.340000}
+      panelEdge: !<Vec4> {x: 1.000000, y: 0.930000, z: 0.780000, w: 0.850000}
+      textPrimary: !<Vec4> {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
+      textSecondary: !<Vec4> {x: 1.000000, y: 0.970000, z: 0.910000, w: 0.860000}
+      textValue: !<Vec4> {x: 0.600000, y: 1.000000, z: 0.800000, w: 1.000000}
+      buttonFill: !<Vec4> {x: 1.000000, y: 0.880000, z: 0.600000, w: 0.720000}
+      buttonHot: !<Vec4> {x: 1.000000, y: 0.990000, z: 0.880000, w: 0.950000}
+      sliderTrack: !<Vec4> {x: 1.000000, y: 0.930000, z: 0.740000, w: 0.420000}
+      sliderFill: !<Vec4> {x: 0.550000, y: 1.000000, z: 0.780000, w: 0.950000}
+      sliderKnob: !<Vec4> {x: 1.000000, y: 1.000000, z: 0.970000, w: 1.000000}
+      buttonBorder: !<Vec4> {x: 1.000000, y: 0.620000, z: 0.160000, w: 1.000000}
+      buttonBorderHot: !<Vec4> {x: 0.350000, y: 1.000000, z: 0.720000, w: 1.000000}
+      wheelTitle: THE WHEEL
+      glazeTitle: THE GLAZE BENCH
+      kilnTitle: THE KILN
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"WHEEL Studio UI"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @ui {"widget":"group_start", "label":"Layout"}'
+    - '// @input float stationDistance = 45 {"hint":"Distance from the user to each station panel, in centimetres.", "widget":"slider", "min":25, "max":90, "step":1}'
+    - '// @input float stationSpreadDeg = 60 {"hint":"Arc half-angle: the side stations sit this many degrees left and right of centre.", "widget":"slider", "min":20, "max":90, "step":5}'
+    - '// @input float stationHeight = -19 {"hint":"Height of the side station panels relative to eye level, in centimetres.", "widget":"slider", "min":-45, "max":10, "step":1}'
+    - '// @input float wheelPanelPitchDeg = 24 {"hint":"Upward pitch of the wheel control panel so it faces the user from below.", "widget":"slider", "min":0, "max":60, "step":1}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Palette (waveguide: bright + saturated only)"}'
+    - '// @input vec4 wheelFill = {1,0.6,0.2,0.5} {"hint":"Wheel panel fill. Bright and translucent - black would render invisible.", "widget":"color"}'
+    - '// @input vec4 glazeFill = {0.15,0.8,1,0.5} {"hint":"Glaze bench panel fill.", "widget":"color"}'
+    - '// @input vec4 kilnFill = {1,0.36,0.22,0.52} {"hint":"Kiln panel fill.", "widget":"color"}'
+    - '// @input vec4 panelEdge = {1,0.93,0.78,0.85} {"hint":"Panel edge colour. Brighter than the fill so the panel reads as a solid object.", "widget":"color"}'
+    - '// @input vec4 textPrimary = {1,1,1,1} {"hint":"Primary text. Near-white so it out-luminates the fill behind it.", "widget":"color"}'
+    - '// @input vec4 textSecondary = {1,0.97,0.91,0.86} {"hint":"Secondary text - warm near-white, still high luminance.", "widget":"color"}'
+    - '// @input vec4 textValue = {0.6,1,0.8,1} {"hint":"Live numeric readouts. Saturated mint reads clearly against the warm fill.", "widget":"color"}'
+    - '// @input vec4 buttonFill = {1,0.46,0.06,0.34} {"hint":"Button face. Kept low-alpha: the button sits ON the panel and the two fills ADD, so a strong button would out-glow its own white label.", "widget":"color"}'
+    - '// @input vec4 buttonHot = {1,0.7,0.24,0.6} {"hint":"Button face while hovered or pressed.", "widget":"color"}'
+    - '// @input vec4 sliderTrack = {1,0.66,0.26,0.4} {"hint":"Slider groove.", "widget":"color"}'
+    - '// @input vec4 sliderFill = {0.25,1,0.68,0.92} {"hint":"Filled portion of the slider - saturated so the current value reads at a glance.", "widget":"color"}'
+    - '// @input vec4 sliderKnob = {1,1,0.97,1} {"hint":"Slider knob. Near-white: it must out-luminate the fill it sits on.", "widget":"color"}'
+    - '// @input vec4 buttonBorder = {1,0.62,0.16,1} {"hint":"Outline colour of the action buttons. Their faces are transparent, so this border and the label are the only lit pixels in the cell.", "widget":"color"}'
+    - '// @input vec4 buttonBorderHot = {0.35,1,0.72,1} {"hint":"Action button outline while hovered or pressed.", "widget":"color"}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Labels"}'
+    - '// @input string wheelTitle = "THE WHEEL" {"hint":"Title of the centre station."}'
+    - '// @input string glazeTitle = "THE GLAZE BENCH" {"hint":"Title of the right-hand station."}'
+    - '// @input string kilnTitle = "THE KILN" {"hint":"Title of the left-hand station."}'
+    - '// @ui {"widget":"group_end"}'

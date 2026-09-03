@@ -7,6 +7,7 @@
     - !<own> 87bd3c9b-87f6-4a87-9eeb-c9244c8ab8da
     - !<own> 543b00ba-49cd-40af-b327-dd7951b5dd01
     - !<own> f3903223-15cd-4d5d-bede-24f0ffd7986a
+    - !<own> 08d3bb6b-1517-4d0e-84a3-7ebe13ed53bb
   layers: !<Layers/267ee9a7-aff2-4f9d-9a49-f71214747d03>
     userLayers:
       - id: 1
@@ -461,6 +462,22 @@
   ScriptTypes:
     "":
       {}
+- !<SceneObject/08d3bb6b-1517-4d0e-84a3-7ebe13ed53bb>
+  PrefabRemaps:
+    []
+  Name: WHEEL Studio UI
+  Enabled: true
+  Layers: 1
+  LocalTransform: !<TransformEntity>
+    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+    HasSegmentScaleCompensation: false
+  Children:
+    []
+  Components:
+    - !<own> 5b27344a-921b-4525-8c99-b91594e5d513
+    - !<own> e98523ca-963c-42e6-896c-704d364e2976
 - !<SceneObject/08e3cc22-f2e1-49fb-9ddc-145fe6547ce3>
   PrefabRemaps:
     []
@@ -577,6 +594,7 @@
     handleRadius: true
     hoverScale: true
     handleOffset: true
+    debugLog: true
   ScriptTypesDefault:
     {}
   ScriptInputs:
@@ -586,6 +604,7 @@
       handleRadius: 0.900000
       hoverScale: 1.550000
       handleOffset: 1.800000
+      debugLog: false
   ScriptTypes:
     "":
       {}
@@ -1770,6 +1789,62 @@
     - !<own> bf2095b6-c6f8-48c8-b840-e0a6cec0dc99
   Components:
     []
+- !<ScriptComponent/5b27344a-921b-4525-8c99-b91594e5d513>
+  PrefabRemaps:
+    []
+  Name: WheelStudioUI
+  Enabled: true
+  ScriptAsset: !<reference> 10fe492c-7520-45bd-92bd-8b4934d463cb
+  ScriptInputsDefault:
+    stationDistance: true
+    stationSpreadDeg: true
+    stationHeight: true
+    wheelPanelPitchDeg: true
+    wheelFill: true
+    glazeFill: true
+    kilnFill: true
+    panelEdge: true
+    textPrimary: true
+    textSecondary: true
+    textValue: true
+    buttonFill: true
+    buttonHot: true
+    sliderTrack: true
+    sliderFill: true
+    sliderKnob: true
+    buttonBorder: true
+    buttonBorderHot: true
+    wheelTitle: true
+    glazeTitle: true
+    kilnTitle: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      stationDistance: !<float> 45.000000
+      stationSpreadDeg: !<float> 60.000000
+      stationHeight: !<float> -19.000000
+      wheelPanelPitchDeg: !<float> 24.000000
+      wheelFill: !<Vec4> {x: 1.000000, y: 0.720000, z: 0.340000, w: 0.340000}
+      glazeFill: !<Vec4> {x: 0.380000, y: 0.900000, z: 1.000000, w: 0.320000}
+      kilnFill: !<Vec4> {x: 1.000000, y: 0.520000, z: 0.400000, w: 0.340000}
+      panelEdge: !<Vec4> {x: 1.000000, y: 0.930000, z: 0.780000, w: 0.850000}
+      textPrimary: !<Vec4> {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
+      textSecondary: !<Vec4> {x: 1.000000, y: 0.970000, z: 0.910000, w: 0.860000}
+      textValue: !<Vec4> {x: 0.600000, y: 1.000000, z: 0.800000, w: 1.000000}
+      buttonFill: !<Vec4> {x: 1.000000, y: 0.880000, z: 0.600000, w: 0.720000}
+      buttonHot: !<Vec4> {x: 1.000000, y: 0.990000, z: 0.880000, w: 0.950000}
+      sliderTrack: !<Vec4> {x: 1.000000, y: 0.930000, z: 0.740000, w: 0.420000}
+      sliderFill: !<Vec4> {x: 0.550000, y: 1.000000, z: 0.780000, w: 0.950000}
+      sliderKnob: !<Vec4> {x: 1.000000, y: 1.000000, z: 0.970000, w: 1.000000}
+      buttonBorder: !<Vec4> {x: 1.000000, y: 0.620000, z: 0.160000, w: 1.000000}
+      buttonBorderHot: !<Vec4> {x: 0.350000, y: 1.000000, z: 0.720000, w: 1.000000}
+      wheelTitle: THE WHEEL
+      glazeTitle: THE GLAZE BENCH
+      kilnTitle: THE KILN
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/5dab7928-660c-4728-b092-703a09913e1d>
   PrefabRemaps:
     []
@@ -5003,6 +5078,24 @@
     Fingers_length: 0.000000
     Thumb_inflate: 0.000000
     Thumb_length: 0.000000
+- !<ScriptComponent/e98523ca-963c-42e6-896c-704d364e2976>
+  PrefabRemaps:
+    []
+  Name: WheelStudioWiring
+  Enabled: true
+  ScriptAsset: !<reference> d3ebdd0f-989f-4de1-8f5d-bb044d0c27a0
+  ScriptInputsDefault:
+    {}
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      ui: !<MappingBased.AssignableType_1> 5b27344a-921b-4525-8c99-b91594e5d513
+      mesher: !<MappingBased.AssignableType_2> 44f286cc-431d-410b-a0dd-f0929b2b8d25
+      handles: !<MappingBased.AssignableType_3> 0d1a3d2a-8016-442e-8cc6-e389ba759a26
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/ea498089-9d00-4dcc-840e-73e0e4e05bdc>
   PrefabRemaps:
     []

@@ -28,6 +28,7 @@
   ExportUid: 00000000-0000-0000-0000-000000000000
   PackagePolicy: CanBeUnpacked
   ScriptInputsHidden:
+    debugLog: false
     handleMaterial: false
     handleMesh: false
     handleOffset: false
@@ -47,6 +48,7 @@
       handleRadius: 0.900000
       hoverScale: 1.550000
       handleOffset: 1.800000
+      debugLog: false
   ScriptTypes:
     -
       {}
@@ -56,3 +58,4 @@
     - '// @input float handleRadius = 0.9 {"hint":"Handle sphere radius in centimetres."}'
     - '// @input float hoverScale = 1.55 {"hint":"Scale multiplier applied while a handle is hovered."}'
     - '// @input float handleOffset = 1.8 {"hint":"Centimetres to float each handle outward past the surface, so it is grabbable instead of half-buried in the mesh."}'
+    - '// @input bool debugLog {"hint":"Print hover/grab events to the Logger panel. For manual pinch testing in the simulator; leave off in normal use."}'

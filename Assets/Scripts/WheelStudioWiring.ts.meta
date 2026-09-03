@@ -1,0 +1,52 @@
+- !<AssetImportMetadata/336f9d3d-0fc0-42a5-8180-040163a7e088>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> d3ebdd0f-989f-4de1-8f5d-bb044d0c27a0
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> d3ebdd0f-989f-4de1-8f5d-bb044d0c27a0
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 457a2c79-441d-4039-b065-984f33f6b779
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/457a2c79-441d-4039-b065-984f33f6b779>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 8c418360-9154-468e-8d03-7f150195affe
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    handles: false
+    mesher: false
+    ui: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - ui: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      mesher: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      handles: !<MappingBased.AssignableType_3> 00000000-0000-0000-0000-000000000000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @input AssignableType_1 ui {"hint":"The WHEEL Studio UI panel emitting control events."}'
+    - '// @input AssignableType_2 mesher {"hint":"LatheMesher driving the vessel geometry."}'
+    - '// @input AssignableType_3 handles {"hint":"ProfileHandles, for UNDO. Optional - UNDO is ignored if unwired."}'

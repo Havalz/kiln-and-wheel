@@ -56,6 +56,21 @@ function clamp01(v: number): number {
   return v < 0 ? 0 : v > 1 ? 1 : v;
 }
 
+/**
+ * Hardcoded vase-like default: narrow foot, lower-middle bulge, waist, flared
+ * rim. Module scope so resetToDefaults() and the constructor share one source.
+ */
+const DEFAULT_PROFILE: ProfilePoint[] = [
+  {y: 0.0, r: 0.3},
+  {y: 0.1, r: 0.46},
+  {y: 0.28, r: 0.86},
+  {y: 0.45, r: 0.78},
+  {y: 0.62, r: 0.42},
+  {y: 0.78, r: 0.37},
+  {y: 0.9, r: 0.54},
+  {y: 1.0, r: 0.8}
+];
+
 export class ProfileModel {
   readonly onChanged = new ChangedEvent();
 
@@ -70,22 +85,8 @@ export class ProfileModel {
   private dirty = true;
 
   constructor() {
-    // Hardcoded vase-like default: narrow foot, lower-middle bulge, waist,
-    // flared rim. There is no hand tracking wired yet, so this default IS
-    // what actually renders in preview.
-    const defaults: ProfilePoint[] = [
-      {y: 0.0, r: 0.3},
-      {y: 0.1, r: 0.46},
-      {y: 0.28, r: 0.86},
-      {y: 0.45, r: 0.78},
-      {y: 0.62, r: 0.42},
-      {y: 0.78, r: 0.37},
-      {y: 0.9, r: 0.54},
-      {y: 1.0, r: 0.8}
-    ];
-
     for (let i = 0; i < CONTROL_POINTS; i++) {
-      this.points.push({y: defaults[i].y, r: defaults[i].r});
+      this.points.push({y: DEFAULT_PROFILE[i].y, r: DEFAULT_PROFILE[i].r});
     }
     this.sortPoints();
 
@@ -170,6 +171,17 @@ export class ProfileModel {
     for (let i = 0; i < CONTROL_POINTS; i++) {
       this.points[i].y = staged[i].y;
       this.points[i].r = staged[i].r;
+    }
+    this.sortPoints();
+    this.dirty = true;
+    this.onChanged.invoke();
+  }
+
+  /** Restore the starting silhouette. Fires onChanged like any other edit. */
+  resetToDefaults(): void {
+    for (let i = 0; i < CONTROL_POINTS; i++) {
+      this.points[i].y = DEFAULT_PROFILE[i].y;
+      this.points[i].r = DEFAULT_PROFILE[i].r;
     }
     this.sortPoints();
     this.dirty = true;

@@ -95,6 +95,10 @@ export class ProfileHandles extends BaseScriptComponent {
   @hint("Centimetres to float each handle outward past the surface, so it is grabbable instead of half-buried in the mesh.")
   handleOffset: number = 1.8;
 
+  @input
+  @hint("Print hover/grab events to the Logger panel. For manual pinch testing in the simulator; leave off in normal use.")
+  debugLog: boolean = false;
+
   private mesher: LatheMesher;
   private model: ProfileModel;
 
@@ -128,6 +132,10 @@ export class ProfileHandles extends BaseScriptComponent {
 
     this.buildHandles();
     this.layoutHandles();
+
+    if (this.debugLog) {
+      print("[WHEEL] handles ready: " + this.handles.length + " (debugLog on)");
+    }
 
     // Baseline, so the first undo returns to the starting silhouette.
     this.undoStack.push(this.model.serialize());
@@ -166,6 +174,13 @@ export class ProfileHandles extends BaseScriptComponent {
   }
 
   // --------------------------------------------------------------- private
+
+  /** Gated by the debugLog input so normal runs stay quiet. */
+  private log(event: string, index: number): void {
+    if (this.debugLog) {
+      print("[WHEEL] " + event + " handle=" + index);
+    }
+  }
 
   private findMesher(): LatheMesher {
     const comps = this.sceneObject.getComponents("ScriptComponent") as any[];
@@ -231,16 +246,20 @@ export class ProfileHandles extends BaseScriptComponent {
   private bindHandle(h: Handle): void {
     h.interactable.onHoverEnter.add(() => {
       h.hovered = true;
+      this.log("hoverEnter", h.index);
     });
     h.interactable.onHoverExit.add(() => {
       h.hovered = false;
+      this.log("hoverExit", h.index);
     });
 
     h.interactable.onTriggerStart.add((e: InteractorEvent) => {
+      this.log("triggerStart", h.index);
       this.beginDrag(h, e);
     });
 
     const end = (e: InteractorEvent) => {
+      this.log("triggerEnd", h.index);
       this.endDrag(h, e);
     };
     h.interactable.onTriggerEnd.add(end);
