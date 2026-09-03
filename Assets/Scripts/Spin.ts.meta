@@ -1,0 +1,46 @@
+- !<AssetImportMetadata/cf246780-e4df-46fd-978b-e9892007c513>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 4715bdbf-2af8-45cb-908b-3925e011080b
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 4715bdbf-2af8-45cb-908b-3925e011080b
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 8fa6ef4c-49f4-4d5c-a90e-3730ddac7cfa
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/8fa6ef4c-49f4-4d5c-a90e-3730ddac7cfa>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: e01025fa-5dd4-485e-8dd6-c18683227889
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    degreesPerSecond: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - degreesPerSecond: !<float> 20.000000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @input float degreesPerSecond = 20 {"hint":"Rotation speed in DEGREES per second (converted to radians at runtime)."}'

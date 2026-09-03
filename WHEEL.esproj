@@ -1,0 +1,53 @@
+studioVersion:
+  major: 5
+  minor: 23
+  patch: 2
+  build: 26081320
+  type: Public
+coreVersion: 372
+clientVersion: 14.16
+updateCheckpoint: 102
+sceneId: 0a1ccb1a-fe88-4fbb-9883-e3af3c75fd99
+metaInfo:
+  hints:
+    []
+  tags:
+    []
+  lensName: WHEEL
+  lensDescriptors:
+    - AI_MUTATED
+  lensApplicableContext:
+    - live_camera
+    - reply_camera
+    - video_chat
+  lensApplicability:
+    - Front
+    - Back
+  lensClientCompatibilities:
+    - Spectacles
+  platformBundlesEnabled: false
+  iconHash: ""
+  videoPreviewHash: ""
+  fromTemplateName: Specs Base Template
+  fromTemplateUrl: Lens Studio 5.23.2.26081320
+  activationCamera: Front
+  sourceMapEnabled: false
+  shaderCacheInvalidationEnabled: false
+  usingMinClientVersions: false
+  androidMinClientVersion:
+    major: 0
+    minor: 0
+    patch: 0
+    build: 0
+  iOSMinClientVersion:
+    major: 0
+    minor: 0
+    patch: 0
+    build: 0
+  documentId: 3385d0a1-dae3-4729-8410-345319f1bca6
+  originalDocumentId: 4492aa5f-47e4-4abe-9643-7d6f708b0869
+  packageId: ""
+  packageVersion: ""
+  spkPrivilegeLevel: Generic
+  gluboEnabled: false
+targetPlatform: Spectacles

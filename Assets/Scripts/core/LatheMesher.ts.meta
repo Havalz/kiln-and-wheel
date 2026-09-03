@@ -1,0 +1,61 @@
+- !<AssetImportMetadata/a8eb7d2d-27e9-43d9-9e4e-8f45f3a3028b>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> caceef8b-3a04-4572-a336-90346b043cb5
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> caceef8b-3a04-4572-a336-90346b043cb5
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> e12d11f8-6d07-41a8-aaac-a39755a48f51
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/e12d11f8-6d07-41a8-aaac-a39755a48f51>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 02dbefa4-a039-4d1d-b62c-22d0ada5b100
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    fluteCount: false
+    fluteDepth: false
+    height: false
+    radiusScale: false
+    renderMeshVisual: false
+    twist: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - renderMeshVisual: !<reference.RenderMeshVisual> 00000000-0000-0000-0000-000000000000
+      height: !<float> 22.000000
+      radiusScale: !<float> 7.000000
+      twist: !<float> 0.000000
+      fluteDepth: !<float> 0.000000
+      fluteCount: !<float> 0.000000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @input Component.RenderMeshVisual renderMeshVisual {"hint":"Visual whose .mesh is driven by the lathe. Required to see anything."}'
+    - '// @input float height = 22 {"hint":"Total height of the form, in centimeters."}'
+    - '// @input float radiusScale = 7 {"hint":"Centimeters that a normalized profile radius of 1.0 maps to."}'
+    - '// @input float twist {"hint":"Twist around Y from base to rim, in RADIANS (0 .. 2*PI)."}'
+    - '// @input float fluteDepth {"hint":"Fluting amplitude as a fraction of radius. 0 disables fluting."}'
+    - '// @input float fluteCount {"hint":"Number of flutes around the circumference. Use whole numbers."}'
