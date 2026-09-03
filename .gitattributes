@@ -252,3 +252,13 @@ Assets/**/*.worldmesh !filter !diff !merge text eol=lf linguist-language=yaml me
 Packages/**/*.worldmesh !filter !diff !merge text eol=lf linguist-language=yaml merge=lens-studio-yaml-merge
 
 # Shipped by Lens Studio
+
+# ── Project override (outside the managed block above) ───────────────────────
+# The block above declares git-lfs for Assets/** and Packages/**, but this
+# project is ~6MB total with a 1.8MB largest file, and git-lfs is not installed
+# here — every commit so far already stored these paths as ordinary blobs.
+# Storing them inline keeps a plain `git clone` working: with lfs declared but
+# not pulled, .lspkg/.ttf/.png resolve to pointer text and Lens Studio fails to
+# open the project. Git attributes are last-match-wins, so these lines win.
+Assets/**/*   !filter !diff !merge
+Packages/**/* !filter !diff !merge

@@ -34,3 +34,6 @@ scratchpad/
 
 # Generated scene dump rewritten by every VirtualScene read
 .virtual-scene.json
+
+# FontSelector scratch: search-preview .ttf downloads, not project assets
+.font_tmp/
