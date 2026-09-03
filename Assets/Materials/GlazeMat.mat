@@ -1,0 +1,55 @@
+- !<Material/29c9101a-518b-4b67-87bd-5e79564c15a5>
+  PackagePath: ""
+  PassesInfo:
+    - !<own> 20d3e291-d869-4e08-8da2-e143c91bc830
+- !<PassInfo/20d3e291-d869-4e08-8da2-e143c91bc830>
+  CachedProperties:
+    []
+  DepthWrite: true
+  DepthTest: true
+  DepthFunction: LessEqual
+  TwoSided: true
+  ColorMask: {x: true, y: true, z: true, w: true}
+  CullMode: Back
+  PolygonOffset: {x: 0.000000, y: 0.000000}
+  FrustumCulling: Auto
+  FrustumCullPad: 0.000000
+  InstanceCount: 1
+  Defines:
+    []
+  BlendMode: Disabled
+  Properties:
+    baseColorBottom:
+      typeIdx: 5
+      value: {x: 0.620000, y: 0.720000, z: 0.660000, w: 1.000000}
+    baseColorTop:
+      typeIdx: 5
+      value: {x: 0.820000, y: 0.900000, z: 0.860000, w: 1.000000}
+    roughness:
+      typeIdx: 1
+      value: 0.450000
+    metallic:
+      typeIdx: 1
+      value: 0.000000
+    crackleScale:
+      typeIdx: 1
+      value: 7.000000
+    crackleIntensity:
+      typeIdx: 1
+      value: 0.220000
+    dripAmount:
+      typeIdx: 1
+      value: 0.400000
+    rimTint:
+      typeIdx: 5
+      value: {x: 1.000000, y: 0.860000, z: 0.620000, w: 0.550000}
+    glossBands:
+      typeIdx: 1
+      value: 0.350000
+    firedGlow:
+      typeIdx: 1
+      value: 0.000000
+    PreviewEnabled:
+      typeIdx: 0
+      value: 0
+  Pass: !<reference> 3ce26aef-2118-4f51-b4d2-771b6f040c84
