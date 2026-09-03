@@ -1,0 +1,58 @@
+- !<AssetImportMetadata/492aacb6-4cee-4708-9d2a-2ead16cbb334>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 2bbdc870-6f7c-4861-b4c6-0feba2e6a68c
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 2bbdc870-6f7c-4861-b4c6-0feba2e6a68c
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 80b8afc2-f544-447b-b67b-1aca7393bd52
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/80b8afc2-f544-447b-b67b-1aca7393bd52>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: d6b95003-6e4f-4dd2-954c-608780158902
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    handleMaterial: false
+    handleMesh: false
+    handleOffset: false
+    handleRadius: false
+    hoverScale: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - handleMesh: !<reference.RenderMesh> 00000000-0000-0000-0000-000000000000
+      handleMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      handleRadius: 0.900000
+      hoverScale: 1.550000
+      handleOffset: 1.800000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @input Asset.RenderMesh handleMesh {"hint":"Sphere mesh shared by all 8 handles."}'
+    - '// @input Asset.Material handleMaterial {"hint":"Bright unlit material. Cloned per handle so hover only lights one."}'
+    - '// @input float handleRadius = 0.9 {"hint":"Handle sphere radius in centimetres."}'
+    - '// @input float hoverScale = 1.55 {"hint":"Scale multiplier applied while a handle is hovered."}'
+    - '// @input float handleOffset = 1.8 {"hint":"Centimetres to float each handle outward past the surface, so it is grabbable instead of half-buried in the mesh."}'

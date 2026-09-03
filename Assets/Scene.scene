@@ -6,7 +6,7 @@
     - !<own> f5d74682-203a-4970-81ea-9fa7b88c96bb
     - !<own> 87bd3c9b-87f6-4a87-9eeb-c9244c8ab8da
     - !<own> 543b00ba-49cd-40af-b327-dd7951b5dd01
-    - !<own> 03d2659a-ce78-41df-9b32-38c4a819f71e
+    - !<own> f3903223-15cd-4d5d-bede-24f0ffd7986a
   layers: !<Layers/267ee9a7-aff2-4f9d-9a49-f71214747d03>
     userLayers:
       - id: 1
@@ -291,21 +291,6 @@
     CapitalizationOverride: None
   DepthTest: false
   TwoSided: false
-- !<SceneObject/03d2659a-ce78-41df-9b32-38c4a819f71e>
-  PrefabRemaps:
-    []
-  Name: AiPreviewAgent Handler
-  Enabled: true
-  Layers: 1
-  LocalTransform: !<TransformEntity>
-    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
-    Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
-    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
-    HasSegmentScaleCompensation: false
-  Children:
-    []
-  Components:
-    - !<own> 86f77705-1395-4f38-875c-a3138c72a0cc
 - !<SceneObject/0451d993-a1f7-464e-9b69-32c0d9af8ed7>
   PrefabRemaps:
     []
@@ -582,6 +567,28 @@
     []
   Components:
     []
+- !<ScriptComponent/0d1a3d2a-8016-442e-8cc6-e389ba759a26>
+  PrefabRemaps:
+    []
+  Name: ProfileHandles
+  Enabled: true
+  ScriptAsset: !<reference> 2bbdc870-6f7c-4861-b4c6-0feba2e6a68c
+  ScriptInputsDefault:
+    handleRadius: true
+    hoverScale: true
+    handleOffset: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      handleMesh: !<reference.RenderMesh> ca980abc-e333-4618-bf33-63220663c652
+      handleMaterial: !<reference.Material> 4041f84e-0d54-45a8-a260-6060f45cff56
+      handleRadius: 0.900000
+      hoverScale: 1.550000
+      handleOffset: 1.800000
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/0e15d535-d32a-422d-ae91-b7fb4eaf13da>
   PrefabRemaps:
     []
@@ -1702,6 +1709,7 @@
     - !<own> 25ca3f5c-b52a-48bb-ad83-43e10832c976
     - !<own> 44f286cc-431d-410b-a0dd-f0929b2b8d25
     - !<own> 11b72f50-6da7-4a25-9541-875bbcaa31c3
+    - !<own> 0d1a3d2a-8016-442e-8cc6-e389ba759a26
 - !<ScriptComponent/5487bd13-5d4e-4872-a225-41cf172732d0>
   PrefabRemaps:
     []
@@ -2576,22 +2584,7 @@
     - !<own> 0e15d535-d32a-422d-ae91-b7fb4eaf13da
   Components:
     - !<own> 4d6cf0ab-5045-43dd-8a34-f16a251b6e82
-- !<SceneObject/859e1ef3-3021-4825-8626-f1dc323b9252>
-  PrefabRemaps:
-    []
-  Name: wrist_to_mid
-  Enabled: true
-  Layers: 1
-  LocalTransform: !<TransformEntity>
-    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
-    Rotation: {x: -0.519104, y: -5.758140, z: 5.627940}
-    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
-    HasSegmentScaleCompensation: false
-  Children:
-    - !<own> 6c1f70d7-86d0-4972-b203-29780f8798e6
-  Components:
-    []
-- !<ScriptComponent/86f77705-1395-4f38-875c-a3138c72a0cc>
+- !<ScriptComponent/8575e695-b8ef-4e11-80a4-d33299ff0673>
   PrefabRemaps:
     []
   Name: AgentInspectScript
@@ -2607,6 +2600,21 @@
   ScriptTypes:
     "":
       {}
+- !<SceneObject/859e1ef3-3021-4825-8626-f1dc323b9252>
+  PrefabRemaps:
+    []
+  Name: wrist_to_mid
+  Enabled: true
+  Layers: 1
+  LocalTransform: !<TransformEntity>
+    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Rotation: {x: -0.519104, y: -5.758140, z: 5.627940}
+    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+    HasSegmentScaleCompensation: false
+  Children:
+    - !<own> 6c1f70d7-86d0-4972-b203-29780f8798e6
+  Components:
+    []
 - !<SceneObject/879ce45b-bd5e-40ff-a3fe-d821523427e4>
   PrefabRemaps:
     []
@@ -3024,6 +3032,22 @@
     - !<own> e9454e66-5d09-4a8a-bcd7-dea762326a48
   Components:
     []
+- !<ScriptComponent/956f5e2d-cb52-43cc-b6c1-23cb150e5591>
+  PrefabRemaps:
+    []
+  Name: AgentInteractScript
+  Enabled: true
+  ScriptAsset: !<reference> 29091811-e792-46be-bfa4-28ddec5f11be
+  ScriptInputsDefault:
+    {}
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      {}
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/95b8f205-5582-4e24-a571-37d577798dff>
   PrefabRemaps:
     []
@@ -5058,6 +5082,22 @@
   Components:
     - !<own> d3e2fbc5-8795-4913-9af6-c8626f8e6d9c
     - !<own> 275aeb4d-77ac-4b1b-811e-907652542110
+- !<SceneObject/f3903223-15cd-4d5d-bede-24f0ffd7986a>
+  PrefabRemaps:
+    []
+  Name: AiPreviewAgent Handler
+  Enabled: true
+  Layers: 1
+  LocalTransform: !<TransformEntity>
+    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+    HasSegmentScaleCompensation: false
+  Children:
+    []
+  Components:
+    - !<own> 8575e695-b8ef-4e11-80a4-d33299ff0673
+    - !<own> 956f5e2d-cb52-43cc-b6c1-23cb150e5591
 - !<SceneObject/f5d74682-203a-4970-81ea-9fa7b88c96bb>
   PrefabRemaps:
     - 012a3973-9507-4230-a6ff-2b8dfd2154fe: e3ec5982-f5aa-45f3-4551-4d3a92a1f432

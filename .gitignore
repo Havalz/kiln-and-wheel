@@ -12,3 +12,6 @@ Support/
 node_modules/
 *.pftrace
 scratchpad/
+
+# Generated scene dump rewritten by every VirtualScene read
+.virtual-scene.json
