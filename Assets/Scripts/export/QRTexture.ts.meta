@@ -1,0 +1,84 @@
+- !<AssetImportMetadata/5216cb96-1fed-46ac-8808-92c72f7d391c>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 59063318-3ee2-4c88-b8e7-cb6fb7b993a1
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 59063318-3ee2-4c88-b8e7-cb6fb7b993a1
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 0496014a-a49f-417f-8021-cf9c9bbc091b
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/0496014a-a49f-417f-8021-cf9c9bbc091b>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 97b05578-8953-44a4-8ba8-d8762163ce62
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    backingPlate: false
+    flipVertical: false
+    githubUser: false
+    kiln: false
+    mesher: false
+    panelAnchor: false
+    panelMaterial: false
+    plateMaterial: false
+    qrImage: false
+    qrMesh: false
+    urlText: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - githubUser: ""
+      qrImage: !<reference.Image> 00000000-0000-0000-0000-000000000000
+      qrMesh: !<reference.RenderMeshVisual> 00000000-0000-0000-0000-000000000000
+      urlText: !<reference.Text> 00000000-0000-0000-0000-000000000000
+      backingPlate: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      kiln: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      mesher: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      panelAnchor: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      panelMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      plateMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      flipVertical: true
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"Share QR — shown at the Kiln after firing"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @input string githubUser {"hint":"GitHub user in https://<user>.github.io/wheel-specs/#v1.<payload>"}'
+    - '// @ui {"widget":"group_start", "label":"Display"}'
+    - '// @input Component.Image qrImage {"hint":"Image component that shows the QR texture. Wire this OR qrMesh; both is fine."}'
+    - '// @input Component.RenderMeshVisual qrMesh {"hint":"RenderMeshVisual alternative to qrImage, for a quad in world space."}'
+    - '// @input Component.Text urlText {"hint":"Text under the QR showing the full URL. This is the fallback that must always work."}'
+    - '// @input SceneObject backingPlate {"hint":"Opaque white backing plate behind the QR. The waveguide cannot render dark, so this supplies the light field."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Source"}'
+    - '// @input AssignableType_1 kiln {"hint":"Fires the export. Without it nothing ever calls showFor()."}'
+    - '// @input AssignableType_2 mesher {"hint":"Supplies the silhouette and the lathe parameters that get encoded."}'
+    - '// @input SceneObject panelAnchor {"hint":"Anchor for the self-built panel. Left empty, the panel hangs off this SceneObject."}'
+    - '// @input Asset.Material panelMaterial {"hint":"Unlit material for the QR quad. Needs ENABLE_BASE_TEX ON, or baseTex is a silent no-op and the code never appears."}'
+    - '// @input Asset.Material plateMaterial {"hint":"Unlit white material for the backing plate. MUST be a different asset with ENABLE_BASE_TEX OFF - a texture-enabled material with no texture bound renders magenta."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Rendering"}'
+    - '// @input bool flipVertical = true {"hint":"Flip rows when filling the texture. ProceduralTextureProvider fills bottom-up; leave on unless the QR renders mirrored — a mirrored QR never scans."}'
+    - '// @ui {"widget":"group_end"}'

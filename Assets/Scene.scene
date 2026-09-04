@@ -10,6 +10,7 @@
     - !<own> 08d3bb6b-1517-4d0e-84a3-7ebe13ed53bb
     - !<own> 3cc383c7-158b-4e15-9464-1c91d7b59ae3
     - !<own> 79f9c389-214d-4f21-ba19-2fc226b10de2
+    - !<own> 8f6b0bf2-ee3e-48bc-b2ce-3b791437f8ad
   layers: !<Layers/267ee9a7-aff2-4f9d-9a49-f71214747d03>
     userLayers:
       - id: 1
@@ -3121,6 +3122,21 @@
     - !<own> b859e31c-4c76-46bd-bd6a-042228e52728
   Components:
     []
+- !<SceneObject/8f6b0bf2-ee3e-48bc-b2ce-3b791437f8ad>
+  PrefabRemaps:
+    []
+  Name: ShareStation
+  Enabled: true
+  Layers: 1
+  LocalTransform: !<TransformEntity>
+    Position: {x: -33.000000, y: -38.000000, z: -20.000000}
+    Rotation: {x: 0.000000, y: 40.000000, z: 0.000000}
+    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+    HasSegmentScaleCompensation: false
+  Children:
+    []
+  Components:
+    - !<own> e284dc2e-0973-4158-aa30-4bcfbade51c8
 - !<SceneObject/8fe2a532-9bf3-4cde-b598-04ce5470718d>
   PrefabRemaps:
     []
@@ -5086,6 +5102,37 @@
     []
   Components:
     - !<own> 4146c3a9-f7dc-4341-aba7-9ce1d0aaa69b
+- !<ScriptComponent/e284dc2e-0973-4158-aa30-4bcfbade51c8>
+  PrefabRemaps:
+    []
+  Name: QRTexture
+  Enabled: true
+  ScriptAsset: !<reference> 59063318-3ee2-4c88-b8e7-cb6fb7b993a1
+  ScriptInputsDefault:
+    qrImage: true
+    qrMesh: true
+    urlText: true
+    backingPlate: true
+    panelAnchor: true
+    flipVertical: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      githubUser: your-github-user
+      qrImage: !<reference.Image> 00000000-0000-0000-0000-000000000000
+      qrMesh: !<reference.RenderMeshVisual> 00000000-0000-0000-0000-000000000000
+      urlText: !<reference.Text> 00000000-0000-0000-0000-000000000000
+      backingPlate: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      kiln: !<MappingBased.AssignableType_1> 89a877f5-36c6-4385-953c-ef99b401ed73
+      mesher: !<MappingBased.AssignableType_2> 44f286cc-431d-410b-a0dd-f0929b2b8d25
+      panelAnchor: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      panelMaterial: !<reference.Material> d0a63f70-edc4-4219-a33c-9d9f48950f8b
+      plateMaterial: !<reference.Material> f6328ba7-d689-4688-849b-eea5c973750c
+      flipVertical: true
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/e2ba526d-75d1-466b-86a5-9cd7c42dca84>
   PrefabRemaps:
     []

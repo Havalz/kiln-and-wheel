@@ -325,6 +325,9 @@ export class VoiceThrow extends BaseScriptComponent {
       -0.5, 1, 0,  0, 0, 1,  0, 1
     ]);
     builder.appendIndices([0, 1, 2, 0, 2, 3]);
+    // Commit the appended data. Without updateMesh() the mesh reports empty
+    // and the bar silently draws nothing.
+    builder.updateMesh();
 
     this.barRoot = global.scene.createSceneObject("VoiceLevelBar");
     this.barRoot.setParent(this.mesher.sceneObject);
