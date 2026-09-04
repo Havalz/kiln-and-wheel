@@ -36,7 +36,7 @@ Nodes:
         Tooltip:
           String: "Colour at the foot of the vessel."
       PositionX: -760
-      PositionY: -360
+      PositionY: -500
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Base Color Bottom
@@ -75,7 +75,7 @@ Nodes:
         Tooltip:
           String: "Colour at the rim."
       PositionX: -760
-      PositionY: -252
+      PositionY: -396
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Base Color Top
@@ -114,7 +114,7 @@ Nodes:
         Tooltip:
           String: "0 = wet gloss, 1 = dry matte."
       PositionX: -760
-      PositionY: -144
+      PositionY: -292
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Roughness
@@ -153,7 +153,7 @@ Nodes:
         Tooltip:
           String: "Tints the highlight with the glaze colour."
       PositionX: -760
-      PositionY: -36
+      PositionY: -188
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Metallic
@@ -192,7 +192,7 @@ Nodes:
         Tooltip:
           String: "Density of the crackle network. Higher = finer."
       PositionX: -760
-      PositionY: 72
+      PositionY: -84
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Crackle Scale
@@ -231,7 +231,7 @@ Nodes:
         Tooltip:
           String: "Visibility of the crackle lines."
       PositionX: -760
-      PositionY: 180
+      PositionY: 20
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Crackle Intensity
@@ -270,7 +270,7 @@ Nodes:
         Tooltip:
           String: "How strongly glaze pools at the foot and thins at the rim."
       PositionX: -760
-      PositionY: 288
+      PositionY: 124
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Drip Amount
@@ -309,7 +309,7 @@ Nodes:
         Tooltip:
           String: "Fresnel colour catching the silhouette edge."
       PositionX: -760
-      PositionY: 396
+      PositionY: 228
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Rim Tint
@@ -348,7 +348,7 @@ Nodes:
         Tooltip:
           String: "Banded specular sheen running up the form."
       PositionX: -760
-      PositionY: 504
+      PositionY: 332
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Gloss Bands
@@ -387,13 +387,130 @@ Nodes:
         Tooltip:
           String: "Warm emissive. Driven only during the kiln sequence."
       PositionX: -760
-      PositionY: 612
+      PositionY: 436
       TemplateID: nodes_inputs_parameters_float
       Title1: Float Parameter
       Title2: Fired Glow
     Node10:
       DependencyIndex: 10
       LevelID: 10
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 1
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: "Kiln"
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        ScriptName:
+          String: bloomA
+        SortIndex:
+          Variable: 10
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Bloom A
+        Tooltip:
+          String: "Crystal bloom 1: (height, angle, size, intensity). Intensity 0 disables."
+      PositionX: -760
+      PositionY: 540
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Bloom A
+    Node11:
+      DependencyIndex: 11
+      LevelID: 11
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 1
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: "Kiln"
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        ScriptName:
+          String: bloomB
+        SortIndex:
+          Variable: 11
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Bloom B
+        Tooltip:
+          String: "Crystal bloom 2: (height, angle, size, intensity)."
+      PositionX: -760
+      PositionY: 644
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Bloom B
+    Node12:
+      DependencyIndex: 12
+      LevelID: 12
+      NodeCount: 0
+      NodeType: 1
+      Ports:
+        Channels:
+          ItemIndex: 1
+          ItemList: "xyzw : rgba : xyz : rgb : xy : x"
+        Default:
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        EnableMax:
+          Variable: false
+        EnableMin:
+          Variable: false
+        Group:
+          String: "Kiln"
+        Max:
+          Variable: 1.0
+        Min:
+          Variable: 0.0
+        Output:
+          IOType: 1
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        ScriptName:
+          String: bloomC
+        SortIndex:
+          Variable: 12
+        Step:
+          Variable: 0.009999999776482582
+        Title:
+          String: Bloom C
+        Tooltip:
+          String: "Crystal bloom 3: (height, angle, size, intensity)."
+      PositionX: -760
+      PositionY: 748
+      TemplateID: nodes_inputs_parameters_float
+      Title1: Float Parameter
+      Title2: Bloom C
+    Node13:
+      DependencyIndex: 13
+      LevelID: 13
       NodeCount: 0
       NodeType: 1
       Ports:
@@ -410,12 +527,19 @@ Nodes:
             input_vec4 rimTint;
             input_float glossBands;
             input_float firedGlow;
+            input_vec4 bloomA;
+            input_vec4 bloomB;
+            input_vec4 bloomC;
             output_vec4 result;
 
             // WAVEGUIDE FLOOR. Black is TRANSPARENT on this display, so no glaze may ever
             // reach true black or it stops existing. Every channel is lifted to a bright
             // desaturated warm grey; a "black" tenmoku reads as dark warm stone, not a hole.
             const vec3 GLAZE_FLOOR = vec3(0.34, 0.30, 0.26);
+
+            // Crystal blooms are near-white with a warm bias: they are where the melt
+            // crystallised and catches light, so they must out-luminate the glaze under them.
+            const vec3 BLOOM_COLOR = vec3(1.0, 0.95, 0.82);
 
             vec2 hash22(vec2 p) {
             	p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -441,6 +565,25 @@ Nodes:
             	return sqrt(d2) - sqrt(d1);
             }
 
+            /**
+             * One crystal bloom. b = (height 0..1, angle 0..1, size, intensity).
+             * Intensity 0 disables the slot, so unused blooms cost a compare and nothing else.
+             * The angular term wraps the short way round the pot so a bloom sitting near the
+             * seam does not get cut in half.
+             */
+            float bloomAt(vec4 b, float h, float angN) {
+            	if (b.w <= 0.0) return 0.0;
+            	float dh = h - b.x;
+            	float da = abs(angN - b.y);
+            	da = min(da, 1.0 - da);
+            	// Angular distance is weighted up so blooms read as roundish patches on the
+            	// surface rather than tall thin bands.
+            	float d = sqrt(dh * dh + da * da * 2.2);
+            	float s = max(b.z, 0.001);
+            	float falloff = 1.0 - smoothstep(0.0, s, d);
+            	return b.w * falloff * falloff;
+            }
+
             void main()
             {
             	vec3 posL = system.getSurfacePositionObjectSpace();
@@ -451,6 +594,7 @@ Nodes:
             	// the local AABB so the gradient holds no matter what the lathe generates.
             	float h = clamp((posL.y - bbMin.y) / max(bbMax.y - bbMin.y, 0.0001), 0.0, 1.0);
             	float ang = atan(posL.z, posL.x);
+            	float angN = ang * 0.15915494 + 0.5;   // -PI..PI -> 0..1
 
             	// ---- vertical gradient ------------------------------------------------
             	vec4 glaze = mix(baseColorBottom, baseColorTop, h);
@@ -477,6 +621,16 @@ Nodes:
             	float edge = crackleEdge(vec2(ang * 1.9, h * 3.4) * scale);
             	float lines = 1.0 - smoothstep(0.0, 0.075, edge);
             	col += lines * crackleIntensity * 0.5 * (0.6 + 0.4 * h);
+
+            	// ---- crystal blooms ---------------------------------------------------
+            	// Seeded by the kiln (see FiringSeed). Additive, so a bloom always brightens
+            	// the glaze beneath it and can never punch a dark hole in the surface.
+            	float bloom = bloomAt(bloomA, h, angN)
+            	            + bloomAt(bloomB, h, angN)
+            	            + bloomAt(bloomC, h, angN);
+            	col += BLOOM_COLOR * bloom * 0.85;
+            	// Crystals sit proud of the melt, so they also pick up extra crackle sparkle.
+            	col += lines * bloom * 0.35;
 
             	// ---- specular / gloss banding -----------------------------------------
             	vec3 N = normalize(system.getSurfaceNormalWorldSpace());
@@ -553,7 +707,7 @@ Nodes:
           Connection0:
             NodeLevelID: 5
             PortID: Output
-          Variable: [0.35, 0.0, 0.0, 0.0]
+          Variable: [0.22, 0.0, 0.0, 0.0]
         dripAmount:
           Connection0:
             NodeLevelID: 6
@@ -574,8 +728,23 @@ Nodes:
             NodeLevelID: 9
             PortID: Output
           Variable: [0.0, 0.0, 0.0, 0.0]
+        bloomA:
+          Connection0:
+            NodeLevelID: 10
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        bloomB:
+          Connection0:
+            NodeLevelID: 11
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
+        bloomC:
+          Connection0:
+            NodeLevelID: 12
+            PortID: Output
+          Variable: [0.0, 0.0, 0.0, 0.0]
         ngs_Height:
-          Variable: 700
+          Variable: 820
         ngs_Version:
           String: 0.1.0
         result:
@@ -587,11 +756,11 @@ Nodes:
       TemplateVersionMinor: 2
       Title1: Custom Code
       Title2: Glaze
-    Node11:
+    Node14:
       CommentSizeX: 0
       CommentSizeY: 0
-      DependencyIndex: 11
-      LevelID: 11
+      DependencyIndex: 14
+      LevelID: 14
       NodeCount: 0
       NodeType: 1
       Ports:
@@ -603,7 +772,7 @@ Nodes:
         FinalColor:
           ClassType1: COLOR
           Connection0:
-            NodeLevelID: 10
+            NodeLevelID: 13
             PortID: result
           Variable: [1.0, 1.0, 1.0, 1.0]
         Targets:

@@ -109,6 +109,7 @@ export class ProfileHandles extends BaseScriptComponent {
   private readonly handles: Handle[] = [];
   private heldCount = 0;
   private warned = false;
+  private editable = true;
 
   onAwake(): void {
     // Component lookup is safe in onAwake; SIK event binding is not (see below).
@@ -147,6 +148,26 @@ export class ProfileHandles extends BaseScriptComponent {
   }
 
   // ---------------------------------------------------------------- public
+
+  /**
+   * Hide the handles and stop them responding. A fired pot is finished clay -
+   * it cannot be reshaped, so the affordance goes away entirely rather than
+   * staying visible but inert.
+   */
+  setEditable(editable: boolean): void {
+    this.editable = editable;
+    for (let i = 0; i < this.handles.length; i++) {
+      this.handles[i].object.enabled = editable;
+    }
+    if (!editable && this.heldCount > 0) {
+      this.heldCount = 0;
+      this.mesher.setDragging(false);
+    }
+  }
+
+  isEditable(): boolean {
+    return this.editable;
+  }
 
   /** True while at least one handle is pinched. Spin polls this indirectly. */
   isAnyHeld(): boolean {
@@ -305,7 +326,7 @@ export class ProfileHandles extends BaseScriptComponent {
   }
 
   private beginDrag(h: Handle, e: InteractorEvent): void {
-    if (h.held) {
+    if (h.held || !this.editable) {
       return;
     }
     const world = this.interactorPoint(e.interactor);

@@ -1,0 +1,81 @@
+- !<AssetImportMetadata/cea9dd3f-5f03-4b70-b9c7-f3dd14037fa1>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 48194f5a-bff8-45ee-a7f1-10f6b1c6fee2
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 48194f5a-bff8-45ee-a7f1-10f6b1c6fee2
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> e4416e1a-3d4f-49dd-b197-70bd3a5b2d9a
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/e4416e1a-3d4f-49dd-b197-70bd3a5b2d9a>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 9ec28ad9-659d-4635-a811-ce1382c361ee
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    coolingTickTrack: false
+    emberCrackleTrack: false
+    emberVfx: false
+    glazeMaterial: false
+    handles: false
+    kilnRoarTrack: false
+    mesher: false
+    revealChimeTrack: false
+    runFireNow: false
+    ui: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - ui: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      glazeMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      mesher: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      handles: !<MappingBased.AssignableType_3> 00000000-0000-0000-0000-000000000000
+      runFireNow: false
+      emberVfx: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      kilnRoarTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      emberCrackleTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      coolingTickTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      revealChimeTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"Kiln — 6s firing"}'
+    - '// @ui {"widget":"separator"}'
+    - // @input AssignableType_1 ui
+    - // @input Asset.Material glazeMaterial
+    - // @input AssignableType_2 mesher
+    - // @input AssignableType_3 handles
+    - '// @ui {"widget":"group_start", "label":"Editor trigger (no pinch in preview)"}'
+    - '// @input bool runFireNow {"hint":"Tick to run the firing sequence now — the simulator stand-in for pressing FIRE. Auto-clears."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Ember VFX"}'
+    - '// @input SceneObject emberVfx {"hint":"SceneObject holding the ember VFXComponent. Enabled for the heat and peak phases only."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Audio"}'
+    - '// @input Asset.AudioTrackAsset kilnRoarTrack {"hint":"6s gas-furnace roar."}'
+    - '// @input Asset.AudioTrackAsset emberCrackleTrack {"hint":"Sparse dry pops during heat and peak."}'
+    - '// @input Asset.AudioTrackAsset coolingTickTrack {"hint":"Metallic contraction ticks during cooling."}'
+    - '// @input Asset.AudioTrackAsset revealChimeTrack {"hint":"Warm ceramic ping at the reveal."}'
+    - '// @ui {"widget":"group_end"}'

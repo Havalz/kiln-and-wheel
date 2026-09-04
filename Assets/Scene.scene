@@ -480,6 +480,7 @@
     - !<own> 5b27344a-921b-4525-8c99-b91594e5d513
     - !<own> e98523ca-963c-42e6-896c-704d364e2976
     - !<own> 91c2a15d-3b9b-471e-b47a-a4f2c5ba0f4e
+    - !<own> 89a877f5-36c6-4385-953c-ef99b401ed73
 - !<SceneObject/08e3cc22-f2e1-49fb-9ddc-145fe6547ce3>
   PrefabRemaps:
     []
@@ -1024,7 +1025,7 @@
   ShadowColor: {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
   ShadowDensity: 1.000000
   Materials:
-    - !<reference> 29c9101a-518b-4b67-87bd-5e79564c15a5
+    - !<reference> 8a668dbb-7360-4308-a812-748072cd4d41
   Mesh: !<reference> 00000000-0000-0000-0000-000000000000
   Skin: !<reference> 00000000-0000-0000-0000-000000000000
   BlendShapesEnabled: true
@@ -2893,6 +2894,32 @@
     CapitalizationOverride: None
   DepthTest: false
   TwoSided: false
+- !<ScriptComponent/89a877f5-36c6-4385-953c-ef99b401ed73>
+  PrefabRemaps:
+    []
+  Name: KilnStation
+  Enabled: true
+  ScriptAsset: !<reference> 48194f5a-bff8-45ee-a7f1-10f6b1c6fee2
+  ScriptInputsDefault:
+    runFireNow: true
+    emberVfx: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      ui: !<MappingBased.AssignableType_1> 5b27344a-921b-4525-8c99-b91594e5d513
+      glazeMaterial: !<reference.Material> 8a668dbb-7360-4308-a812-748072cd4d41
+      mesher: !<MappingBased.AssignableType_2> 44f286cc-431d-410b-a0dd-f0929b2b8d25
+      handles: !<MappingBased.AssignableType_3> 0d1a3d2a-8016-442e-8cc6-e389ba759a26
+      runFireNow: false
+      emberVfx: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      kilnRoarTrack: !<reference.AudioTrackAsset> 02d4ab8f-7775-4be1-8725-610cb59d471a
+      emberCrackleTrack: !<reference.AudioTrackAsset> bf6db2b7-8643-49ec-be1d-0aa01d2e9550
+      coolingTickTrack: !<reference.AudioTrackAsset> d370e474-a998-425b-afc7-803b8882432f
+      revealChimeTrack: !<reference.AudioTrackAsset> 2e420bf0-cb26-4b94-bf18-b602d4696b37
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/8b877074-7eee-4be1-b669-714f8d5a1da3>
   PrefabRemaps:
     []
@@ -3008,7 +3035,7 @@
   ScriptInputs:
     "":
       ui: !<MappingBased.AssignableType_1> 5b27344a-921b-4525-8c99-b91594e5d513
-      glazeMaterial: !<reference.Material> 29c9101a-518b-4b67-87bd-5e79564c15a5
+      glazeMaterial: !<reference.Material> 8a668dbb-7360-4308-a812-748072cd4d41
       typedGlaze: a dark iron tenmoku that breaks rust at the rim
       runTypedGlaze: false
       geminiModel: gemini-2.5-flash

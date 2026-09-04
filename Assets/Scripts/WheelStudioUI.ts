@@ -231,6 +231,7 @@ export class WheelStudioUI extends BaseScriptComponent {
   private _onGlaze = new Event<void>();
   private _onGlazeMicDown = new Event<void>();
   private _onGlazeMicUp = new Event<void>();
+  private _onFire = new Event<void>();
 
   /** Normalised 0..1; the wiring maps it to radians. */
   get onTwistChanged(): PublicApi<number> { return this._onTwist.publicApi(); }
@@ -245,6 +246,8 @@ export class WheelStudioUI extends BaseScriptComponent {
   get onGlazeMicDown(): PublicApi<void> { return this._onGlazeMicDown.publicApi(); }
   /** Mic button released - stop listening and use the transcript. */
   get onGlazeMicUp(): PublicApi<void> { return this._onGlazeMicUp.publicApi(); }
+  /** FIRE pressed on the Kiln. */
+  get onFire(): PublicApi<void> { return this._onFire.publicApi(); }
 
   // ── State ─────────────────────────────────────────────────────────────────
   private fluteCount = 6;
@@ -256,6 +259,11 @@ export class WheelStudioUI extends BaseScriptComponent {
   private glazeTranscriptText: Text = null;
   private glazeStatusText: Text = null;
   private glazeStateText: Text = null;
+  private kilnStateText: Text = null;
+  private kilnStatusText: Text = null;
+  private lastGlazeName = "Celadon Crackle";
+  private wheelControls: Slider[] = [];
+  private wheelButtons: Button[] = [];
 
   static readonly FLUTE_DEPTH_MAX = 0.35;
   static readonly FLUTE_COUNT_MIN = 3;
@@ -310,6 +318,39 @@ export class WheelStudioUI extends BaseScriptComponent {
       state === "GLAZED" ? this.textValue : this.textSecondary;
   }
 
+  setKilnState(state: string): void {
+    if (this.kilnStateText === null) return;
+    this.kilnStateText.text = state;
+    this.kilnStateText.textFill.color =
+      state === "FIRED" ? this.textValue : this.textSecondary;
+  }
+
+  setKilnStatus(text: string): void {
+    if (this.kilnStatusText !== null) this.kilnStatusText.text = text;
+  }
+
+  /** Name of the glaze currently on the pot; feeds the firing seed. */
+  getGlazeName(): string {
+    return this.lastGlazeName;
+  }
+
+  setGlazeName(name: string): void {
+    if (name && name.length > 0) this.lastGlazeName = name;
+  }
+
+  /**
+   * Lock the wheel controls once the piece is fired. Sliders go inactive and
+   * the action buttons stop responding - fired clay cannot be reshaped.
+   */
+  setWheelControlsEnabled(enabled: boolean): void {
+    for (let i = 0; i < this.wheelControls.length; i++) {
+      (this.wheelControls[i] as any).inactive = !enabled;
+    }
+    for (let i = 0; i < this.wheelButtons.length; i++) {
+      (this.wheelButtons[i] as any).inactive = !enabled;
+    }
+  }
+
   // ── Station construction ──────────────────────────────────────────────────
 
   private buildStations(): void {
@@ -336,8 +377,7 @@ export class WheelStudioUI extends BaseScriptComponent {
     const kilnRoot = this.obj(this.sceneObject, "Station_Kiln",
       new vec3(-rx, this.stationHeight, rz));
     kilnRoot.getTransform().setLocalRotation(quat.angleAxis(spread, vec3.up()));
-    this.buildStationMarker(kilnRoot, this.kilnTitle, ICON_KILN, this.kilnFill,
-      "Fire and cool");
+    this.buildKiln(kilnRoot);
   }
 
   private buildWheelPanel(root: SceneObject): void {
@@ -457,6 +497,70 @@ export class WheelStudioUI extends BaseScriptComponent {
     });
   }
 
+  /** Kiln: state chip, the firing readout, and the FIRE button. */
+  private buildKiln(root: SceneObject): void {
+    const plate = this.plate(root, this.kilnFill);
+    const content = this.obj(root, "Content", new vec3(0, 0, PANEL_CONTENT_Z_LIFT));
+
+    const col = content.createComponent(FlexLayout.getTypeName()) as FlexLayout;
+    col.autoDiscoverItemsOnStart = false;
+    col.onInitialized.add(() => {
+      col.width = SIDE_PANEL_W;
+      col.height = -1;
+      col.direction = FlexDirection.Column;
+      col.alignItems = FlexAlign.Stretch;
+      col.rowGap = 0.55;
+      col.paddingTop = PAD;
+      col.paddingBottom = PAD;
+      col.paddingLeft = PAD;
+      col.paddingRight = PAD;
+    });
+    col.onLayoutComplete.add((r) => {
+      plate.size = new vec2(r.containerWidth, r.containerHeight);
+    });
+
+    this.header(content, this.kilnTitle, ICON_KILN, SIDE_INNER_W);
+
+    this.flexChild(content, {w: SIDE_INNER_W, h: 1.9}, (row) => {
+      this.kilnStateText = this.rowText(row, "COLD", "Callout", SIDE_INNER_W,
+        this.textSecondary, HorizontalAlignment.Left);
+    });
+
+    // The firing readout carries the seed, so a result the user liked can be
+    // reproduced later - the seed IS the recipe.
+    this.flexChild(content, {w: SIDE_INNER_W, h: 2.2}, (row) => {
+      this.kilnStatusText = this.rowText(row, "Ready to fire", "Caption",
+        SIDE_INNER_W, this.textPrimary, HorizontalAlignment.Left);
+    });
+
+    this.flexChild(content, {w: SIDE_INNER_W, h: 3.0}, (rowObj) => {
+      const row = this.flexRow(rowObj, SIDE_INNER_W, 3.0, {
+        gap: 0.4, justify: FlexJustify.Center, align: FlexAlign.Center
+      });
+      this.flexChild(row, {w: 7.0, h: 2.6}, (btnObj) => {
+        const btn = btnObj.createComponent(Button.getTypeName()) as Button;
+        btn.onInitialized.add(() => {
+          btn.size = new vec3(7.0, 2.6, 1);
+          this.outlineVisual(btn.visual as RoundedRectangleVisual,
+            this.buttonBorder, this.buttonBorderHot);
+        });
+        const labelObj = this.obj(btnObj, "FireLabel", new vec3(0, 0, BUTTON_LABEL_Z));
+        const t = labelObj.createComponent("Component.Text") as Text;
+        t.text = "FIRE";
+        t.font = THEME_FONT;
+        t.depthTest = true;
+        applyTextRole(t, "Button");
+        t.textFill.color = this.textPrimary;
+        t.horizontalAlignment = HorizontalAlignment.Center;
+        t.verticalAlignment = VerticalAlignment.Center;
+        t.horizontalOverflow = HorizontalOverflow.Overflow;
+        t.verticalOverflow = VerticalOverflow.Overflow;
+        t.layoutRect = Rect.create(-3.25, 3.25, -1.2, 1.2);
+        btn.onTriggerUp.add(() => this._onFire.invoke());
+      });
+    });
+  }
+
   private buildStationMarker(root: SceneObject, title: string, icon: Texture,
       fill: vec4, subtitle: string): void {
     const plate = this.plate(root, fill);
@@ -531,6 +635,7 @@ export class WheelStudioUI extends BaseScriptComponent {
         this.themeVisual(s.knobVisual as RoundedRectangleVisual, this.sliderKnob, this.sliderKnob);
         s.onValueChange.add((v: number) => onChange(v));
         slider = s;
+        this.wheelControls.push(s);
       });
 
       this.flexChild(row, {w: 2.6, h: 2.0}, (valueObj) => {
@@ -744,6 +849,7 @@ export class WheelStudioUI extends BaseScriptComponent {
       t.verticalOverflow = VerticalOverflow.Overflow;
       t.layoutRect = Rect.create(-(widthCm - 0.5) / 2, (widthCm - 0.5) / 2, -1.2, 1.2);
       btn.onTriggerUp.add(onClick);
+      this.wheelButtons.push(btn);
     });
   }
 
