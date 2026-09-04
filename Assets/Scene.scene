@@ -500,6 +500,7 @@
     - !<own> e98523ca-963c-42e6-896c-704d364e2976
     - !<own> 91c2a15d-3b9b-471e-b47a-a4f2c5ba0f4e
     - !<own> 89a877f5-36c6-4385-953c-ef99b401ed73
+    - !<own> a6e084b2-d483-4ca1-aba7-f161df9737bf
 - !<SceneObject/08e3cc22-f2e1-49fb-9ddc-145fe6547ce3>
   PrefabRemaps:
     []
@@ -3667,6 +3668,31 @@
     - !<own> d5f63266-b1ce-419f-847b-3c9f347b3ee2
   Components:
     []
+- !<ScriptComponent/a6e084b2-d483-4ca1-aba7-f161df9737bf>
+  PrefabRemaps:
+    []
+  Name: WheelAudio
+  Enabled: true
+  ScriptAsset: !<reference> 1ce5293a-5dc8-41f3-9886-f92534d46431
+  ScriptInputsDefault:
+    humVolume: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      handles: !<MappingBased.AssignableType_1> 0d1a3d2a-8016-442e-8cc6-e389ba759a26
+      mesher: !<MappingBased.AssignableType_2> 44f286cc-431d-410b-a0dd-f0929b2b8d25
+      kiln: !<MappingBased.AssignableType_3> 89a877f5-36c6-4385-953c-ef99b401ed73
+      humLowTrack: !<reference.AudioTrackAsset> 6abbd50c-1181-43cc-9726-740064a03123
+      humHighTrack: !<reference.AudioTrackAsset> 2d65acaa-af25-4d4e-8e80-2f3720692079
+      humVolume: 0.550000
+      bellLowTrack: !<reference.AudioTrackAsset> f150a6e8-fedb-4b83-816b-5d1e3c316a15
+      bellMidTrack: !<reference.AudioTrackAsset> dffe1077-cd0b-4841-b0a5-f27419fa0a90
+      bellHighTrack: !<reference.AudioTrackAsset> de38d9a0-73d2-452f-a9fe-0b83ff652317
+      thudTrack: !<reference.AudioTrackAsset> 294ec66c-2686-400a-b17f-706b2a15651b
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/a7526b33-fca3-4f28-8e32-b0e9aa13c4b4>
   PrefabRemaps:
     []

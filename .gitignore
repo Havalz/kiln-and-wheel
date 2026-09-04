@@ -37,3 +37,7 @@ scratchpad/
 
 # FontSelector scratch: search-preview .ttf downloads, not project assets
 .font_tmp/
+
+# build-sfx / build-music scratch: one-shot generator scripts with absolute,
+# machine-specific paths. Kept locally for reruns, never shipped.
+tempAssetGen/

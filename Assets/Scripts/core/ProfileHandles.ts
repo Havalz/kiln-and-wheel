@@ -174,6 +174,17 @@ export class ProfileHandles extends BaseScriptComponent {
     return this.heldCount > 0;
   }
 
+  /**
+   * Index of the handle currently being dragged, or -1 when idle. The wheel hum
+   * follows this: it is the control point the potter's hands are on.
+   */
+  getHeldIndex(): number {
+    for (let i = 0; i < this.handles.length; i++) {
+      if (this.handles[i].held) return i;
+    }
+    return -1;
+  }
+
   canUndo(): boolean {
     return this.undoStack.canUndo();
   }

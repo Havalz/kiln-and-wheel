@@ -1,0 +1,79 @@
+- !<AssetImportMetadata/65b84557-2403-4bd5-a87b-73847ab99b93>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 1ce5293a-5dc8-41f3-9886-f92534d46431
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 1ce5293a-5dc8-41f3-9886-f92534d46431
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 9c6c8c9a-9a9d-48d7-942b-b6a2eab9b4d2
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/9c6c8c9a-9a9d-48d7-942b-b6a2eab9b4d2>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: f9c35360-b77e-4197-8907-68652e81fcd1
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    bellHighTrack: false
+    bellLowTrack: false
+    bellMidTrack: false
+    handles: false
+    humHighTrack: false
+    humLowTrack: false
+    humVolume: false
+    kiln: false
+    mesher: false
+    thudTrack: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - handles: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      mesher: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      kiln: !<MappingBased.AssignableType_3> 00000000-0000-0000-0000-000000000000
+      humLowTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      humHighTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      humVolume: 0.550000
+      bellLowTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      bellMidTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      bellHighTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      thudTrack: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"Wheel audio — hum + ping test"}'
+    - '// @ui {"widget":"separator"}'
+    - // @input AssignableType_1 handles
+    - // @input AssignableType_2 mesher
+    - '// @input AssignableType_3 kiln {"hint":"Used only to ask whether the piece is fired."}'
+    - '// @ui {"widget":"group_start", "label":"Hum loops"}'
+    - '// @input Asset.AudioTrackAsset humLowTrack {"hint":"Low fundamental. Dominates when the profile is wide."}'
+    - '// @input Asset.AudioTrackAsset humHighTrack {"hint":"High fundamental. Dominates when the profile is narrow."}'
+    - '// @input float humVolume = 0.55 {"hint":"Master level for the wheel hum.", "widget":"slider", "min":0, "max":1, "step":0.05}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Ping test"}'
+    - '// @input Asset.AudioTrackAsset bellLowTrack {"hint":"Fired, large pot."}'
+    - '// @input Asset.AudioTrackAsset bellMidTrack {"hint":"Fired, medium pot."}'
+    - '// @input Asset.AudioTrackAsset bellHighTrack {"hint":"Fired, small pot — the highest note."}'
+    - '// @input Asset.AudioTrackAsset thudTrack {"hint":"Unfired clay. Damped, almost no tail."}'
+    - '// @ui {"widget":"group_end"}'
