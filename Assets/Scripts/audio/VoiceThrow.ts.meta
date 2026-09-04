@@ -1,0 +1,87 @@
+- !<AssetImportMetadata/af6bec61-bf0a-44a9-8337-b3accf9d3a71>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> c2a6ef25-42e9-44bb-9043-a6b818727a73
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> c2a6ef25-42e9-44bb-9043-a6b818727a73
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 3b976935-2be9-4e99-b25d-984dad92e2db
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/3b976935-2be9-4e99-b25d-984dad92e2db>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 9f159017-f1f6-4d84-bc41-793b4efa528b
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    barColor: false
+    barMaterial: false
+    barOffset: false
+    barSize: false
+    editorEnvelope: false
+    mesher: false
+    microphone: false
+    runVoiceRecordNow: false
+    runVoiceThrowNow: false
+    ui: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - mesher: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      ui: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      microphone: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      barColor: !<Vec4> {x: 0.300000, y: 1.000000, z: 0.720000, w: 1.000000}
+      barOffset: !<Vec3> {x: 14.000000, y: 0.000000, z: 0.000000}
+      barSize: !<Vec2> {x: 1.400000, y: 24.000000}
+      barMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      editorEnvelope: !<float[]>
+        - 0.150000
+        - 0.450000
+        - 0.900000
+        - 0.750000
+        - 0.400000
+        - 0.550000
+        - 0.850000
+        - 0.250000
+      runVoiceThrowNow: false
+      runVoiceRecordNow: false
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"Voice-thrown silhouette — hum a pot into being"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @input AssignableType_1 mesher {"hint":"Owns the ProfileModel the voice writes into."}'
+    - '// @input AssignableType_2 ui {"hint":"Supplies the THROW WITH VOICE button and status line."}'
+    - '// @input Asset.AudioTrackAsset microphone {"hint":"Audio Track asset backed by a Microphone provider. Without it the editor path still works."}'
+    - '// @ui {"widget":"group_start", "label":"Level bar"}'
+    - '// @input vec4 barColor = {0.3,1,0.72,1} {"hint":"Bright bar shown beside the wheel while recording.", "widget":"color"}'
+    - '// @input vec3 barOffset = {14,0,0} {"hint":"Where the bar sits relative to the wheel, in cm."}'
+    - '// @input vec2 barSize = {1.4,24} {"hint":"Bar size in cm: x is width, y is full-scale height."}'
+    - '// @input Asset.Material barMaterial {"hint":"Unlit material for the bar. Without one the bar is skipped rather than drawn untextured."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Editor trigger (no microphone in Preview)"}'
+    - '// @input float[] editorEnvelope = {0.15,0.45,0.9,0.75,0.4,0.55,0.85,0.25} {"hint":"Eight raw loudness values. Fed through the IDENTICAL pipeline the microphone uses."}'
+    - '// @input bool runVoiceThrowNow {"hint":"Tick to throw a pot from editorEnvelope. Auto-clears."}'
+    - '// @input bool runVoiceRecordNow {"hint":"Tick to start a real recording without the button — the way to exercise the microphone and the no-mic abort in the simulator. Auto-clears."}'
+    - '// @ui {"widget":"group_end"}'

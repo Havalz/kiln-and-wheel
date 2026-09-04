@@ -257,6 +257,8 @@ export class WheelStudioUI extends BaseScriptComponent {
   private _onGlazeMicUp = new Event<void>();
   private _onFire = new Event<void>();
   private _onShelfPick = new Event<number>();
+  private _onVoiceThrowDown = new Event<void>();
+  private _onVoiceThrowUp = new Event<void>();
 
   /** Normalised 0..1; the wiring maps it to radians. */
   get onTwistChanged(): PublicApi<number> { return this._onTwist.publicApi(); }
@@ -275,6 +277,10 @@ export class WheelStudioUI extends BaseScriptComponent {
   get onFire(): PublicApi<void> { return this._onFire.publicApi(); }
   /** A shelf pot was pinched. Payload is its index in the displayed row. */
   get onShelfPick(): PublicApi<number> { return this._onShelfPick.publicApi(); }
+  /** THROW WITH VOICE pressed — start listening. */
+  get onVoiceThrowDown(): PublicApi<void> { return this._onVoiceThrowDown.publicApi(); }
+  /** THROW WITH VOICE released — stop and shape. */
+  get onVoiceThrowUp(): PublicApi<void> { return this._onVoiceThrowUp.publicApi(); }
 
   // ── State ─────────────────────────────────────────────────────────────────
   private fluteCount = 6;
@@ -292,6 +298,7 @@ export class WheelStudioUI extends BaseScriptComponent {
   private shelfPieces: ShelfPiece[] = [];
   private shelfEmptyText: Text = null;
   private shelfNoteText: Text = null;
+  private voiceStatusText: Text = null;
   private lastGlazeName = "Celadon Crackle";
   private wheelControls: Slider[] = [];
   private wheelButtons: Button[] = [];
@@ -380,6 +387,11 @@ export class WheelStudioUI extends BaseScriptComponent {
     for (let i = 0; i < this.wheelButtons.length; i++) {
       (this.wheelButtons[i] as any).inactive = !enabled;
     }
+  }
+
+  /** One line of voice-throw feedback under the wheel controls. */
+  setVoiceStatus(msg: string): void {
+    if (this.voiceStatusText) this.voiceStatusText.text = msg;
   }
 
   /**
@@ -853,6 +865,43 @@ export class WheelStudioUI extends BaseScriptComponent {
       this.textButton(row, "UNDO", 4.8, () => this._onUndo.invoke());
       this.textButton(row, "RESET", 5.0, () => this._onReset.invoke());
       this.textButton(row, "GLAZE >", 5.8, () => this._onGlaze.invoke());
+    });
+
+    // Hold-to-hum. Same onTriggerDown/Up pair the glaze mic uses - Element
+    // exposes those for a hold; onTriggerStart/End belong to Interactable and
+    // would silently no-op here.
+    this.flexChild(content, {w: WHEEL_INNER_W, h: 3.0}, (rowObj) => {
+      const row = this.flexRow(rowObj, WHEEL_INNER_W, 3.0, {
+        gap: 0.4, justify: FlexJustify.Center, align: FlexAlign.Center
+      });
+      this.flexChild(row, {w: 13.0, h: 2.6}, (btnObj) => {
+        const btn = btnObj.createComponent(Button.getTypeName()) as Button;
+        btn.onInitialized.add(() => {
+          btn.size = new vec3(13.0, 2.6, 1);
+          this.outlineVisual(btn.visual as RoundedRectangleVisual,
+            this.buttonBorder, this.buttonBorderHot);
+        });
+        const labelObj = this.obj(btnObj, "VoiceLabel", new vec3(0, 0, BUTTON_LABEL_Z));
+        const t = labelObj.createComponent("Component.Text") as Text;
+        t.text = "THROW WITH VOICE";
+        t.font = THEME_FONT;
+        t.depthTest = true;
+        applyTextRole(t, "Button");
+        t.textFill.color = this.textPrimary;
+        t.horizontalAlignment = HorizontalAlignment.Center;
+        t.verticalAlignment = VerticalAlignment.Center;
+        t.horizontalOverflow = HorizontalOverflow.Overflow;
+        t.verticalOverflow = VerticalOverflow.Overflow;
+        t.layoutRect = Rect.create(-6.25, 6.25, -1.2, 1.2);
+        btn.onTriggerDown.add(() => this._onVoiceThrowDown.invoke());
+        btn.onTriggerUp.add(() => this._onVoiceThrowUp.invoke());
+        this.wheelButtons.push(btn);
+      });
+    });
+
+    this.flexChild(content, {w: WHEEL_INNER_W, h: 1.9}, (row) => {
+      this.voiceStatusText = this.rowText(row, "Hold and hum to throw a shape",
+        "Caption", WHEEL_INNER_W, this.textSecondary, HorizontalAlignment.Center);
     });
   }
 

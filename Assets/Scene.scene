@@ -9,6 +9,7 @@
     - !<own> f3903223-15cd-4d5d-bede-24f0ffd7986a
     - !<own> 08d3bb6b-1517-4d0e-84a3-7ebe13ed53bb
     - !<own> 3cc383c7-158b-4e15-9464-1c91d7b59ae3
+    - !<own> 79f9c389-214d-4f21-ba19-2fc226b10de2
   layers: !<Layers/267ee9a7-aff2-4f9d-9a49-f71214747d03>
     userLayers:
       - id: 1
@@ -931,6 +932,44 @@
     - !<own> 35eb1198-5ac1-4088-b018-6f2c1a2eb5d9
   Components:
     []
+- !<ScriptComponent/1aeed068-05dd-4b92-a6f3-7dd05667af69>
+  PrefabRemaps:
+    []
+  Name: VoiceThrow
+  Enabled: true
+  ScriptAsset: !<reference> c2a6ef25-42e9-44bb-9043-a6b818727a73
+  ScriptInputsDefault:
+    barColor: true
+    barOffset: true
+    barSize: true
+    editorEnvelope: true
+    runVoiceThrowNow: true
+    runVoiceRecordNow: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      mesher: !<MappingBased.AssignableType_1> 44f286cc-431d-410b-a0dd-f0929b2b8d25
+      ui: !<MappingBased.AssignableType_2> 5b27344a-921b-4525-8c99-b91594e5d513
+      microphone: !<reference.AudioTrackAsset> 87c6a30d-46b3-4939-8d46-3aa20667f2c2
+      barColor: !<Vec4> {x: 0.300000, y: 1.000000, z: 0.720000, w: 1.000000}
+      barOffset: !<Vec3> {x: 14.000000, y: 0.000000, z: 0.000000}
+      barSize: !<Vec2> {x: 1.400000, y: 24.000000}
+      barMaterial: !<reference.Material> 3db00254-2d2e-4e3e-9a58-099058dfe992
+      editorEnvelope: !<float[]>
+        - 0.150000
+        - 0.450000
+        - 0.900000
+        - 0.750000
+        - 0.400000
+        - 0.550000
+        - 0.850000
+        - 0.250000
+      runVoiceThrowNow: false
+      runVoiceRecordNow: false
+  ScriptTypes:
+    "":
+      {}
 - !<RenderMeshVisual/1f969daa-5809-4500-b314-98d91ccba131>
   PrefabRemaps:
     []
@@ -2505,6 +2544,21 @@
     - !<own> 14acea65-de20-4fdc-93bd-7af33a900d9e
   Components:
     - !<own> 21b2e0dd-1987-4c24-875d-1c3c89afb7f6
+- !<SceneObject/79f9c389-214d-4f21-ba19-2fc226b10de2>
+  PrefabRemaps:
+    []
+  Name: VoiceThrow
+  Enabled: true
+  Layers: 1
+  LocalTransform: !<TransformEntity>
+    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+    HasSegmentScaleCompensation: false
+  Children:
+    []
+  Components:
+    - !<own> 1aeed068-05dd-4b92-a6f3-7dd05667af69
 - !<SceneObject/7aa85bd8-d423-42cd-b190-473711e94929>
   PrefabRemaps:
     []
