@@ -390,8 +390,18 @@ export class WheelStudioUI extends BaseScriptComponent {
   }
 
   /** One line of voice-throw feedback under the wheel controls. */
-  setVoiceStatus(msg: string): void {
+  /**
+   * The wheel panel's single status line. Voice throwing and UNDO both write
+   * here; whichever spoke last wins, which is the right behaviour for a line
+   * that reports what just happened.
+   */
+  setWheelStatus(msg: string): void {
     if (this.voiceStatusText) this.voiceStatusText.text = msg;
+  }
+
+  /** Alias kept so VoiceThrow reads naturally at its call site. */
+  setVoiceStatus(msg: string): void {
+    this.setWheelStatus(msg);
   }
 
   /**

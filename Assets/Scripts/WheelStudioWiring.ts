@@ -62,7 +62,21 @@ export class WheelStudioWiring extends BaseScriptComponent {
     });
 
     this.ui.onUndo.add(() => {
-      if (this.handles) this.handles.undo();
+      if (!this.handles) {
+        this.ui.setWheelStatus("Undo unavailable");
+        return;
+      }
+      // undo() returns false for two different reasons and says which is which
+      // only through state, so ask before calling: a held handle is a "not
+      // now", an empty stack is a "nothing to undo". Reporting both as failure
+      // is what made this button look broken.
+      if (this.handles.getHeldIndex() >= 0) {
+        this.ui.setWheelStatus("Let go of the handle first");
+        return;
+      }
+      this.ui.setWheelStatus(this.handles.undo()
+        ? "Undid the last change"
+        : "Nothing to undo");
     });
 
     this.ui.onReset.add(() => {
@@ -78,9 +92,14 @@ export class WheelStudioWiring extends BaseScriptComponent {
     });
 
     this.ui.onGlaze.add(() => {
-      // The glaze bench has no controls yet; this is the handoff point for the
-      // next stage of the loop rather than a no-op to be silently dropped.
-      print("WHEEL: GLAZE requested - glaze bench station is not built yet.");
+      // The bench exists as of P5, so this is a real handoff rather than a
+      // placeholder. There is no camera to swing - the stations are fixed in
+      // world space at 0 and +60 degrees - so the handoff is to make the bench
+      // ready and say plainly where to look.
+      this.ui.setGlazeState("WET");
+      this.ui.setGlazeStatus("Hold the mic and describe a glaze");
+      this.ui.setWheelStatus("Glaze bench ready — look right");
+      print("WHEEL: GLAZE handoff - bench primed, awaiting a spoken glaze.");
     });
 
     // Seed the panel from the mesher's authored starting values.

@@ -42,7 +42,7 @@ Pinch is the only interaction. No multiplayer, no Sync Kit, no database, no live
 
 ## Known limitations
 
-Simulated pinches never fire on panel buttons laid out inside a FlexLayout (UNDO, RESET, GLAZE, HOLD TO SPEAK, FIRE all affected) — only manually-positioned elements outside a layout (shelf slots) receive them. Editor triggers remain the verified path for FlexLayout-based controls until LEAF in P12.
+Simulated pinches DO reach panel buttons inside a FlexLayout — FIRE, GLAZE →, RESET and UNDO are all confirmed, as are manually-positioned interactables outside a layout (shelf slots, the pot's grab capsule); the earlier "UNDO and GLAZE → don't respond" was never a targeting problem but two silent no-ops (GLAZE → was a `print()` stub, UNDO returned false on an empty stack without saying so), so when a control looks dead, check whether its handler produces any visible effect before suspecting the hit target. The one interaction still unverified by gesture is dragging a profile handle: the handles sit at ~4–5cm radius, inside the pot's ~7cm surface, and `PreviewInteractTool` refuses with `Blocked by "WHEEL Lathe" between camera and target` — a tool-side occlusion check, so whether a real pinch is affected is untested either way.
 
 ## Do not
 
