@@ -8,6 +8,7 @@
     - !<own> 543b00ba-49cd-40af-b327-dd7951b5dd01
     - !<own> f3903223-15cd-4d5d-bede-24f0ffd7986a
     - !<own> 08d3bb6b-1517-4d0e-84a3-7ebe13ed53bb
+    - !<own> 3cc383c7-158b-4e15-9464-1c91d7b59ae3
   layers: !<Layers/267ee9a7-aff2-4f9d-9a49-f71214747d03>
     userLayers:
       - id: 1
@@ -478,6 +479,7 @@
   Components:
     - !<own> 5b27344a-921b-4525-8c99-b91594e5d513
     - !<own> e98523ca-963c-42e6-896c-704d364e2976
+    - !<own> 91c2a15d-3b9b-471e-b47a-a4f2c5ba0f4e
 - !<SceneObject/08e3cc22-f2e1-49fb-9ddc-145fe6547ce3>
   PrefabRemaps:
     []
@@ -2803,7 +2805,6 @@
     HasSegmentScaleCompensation: false
   Children:
     - !<own> f16d31a9-4a85-48d5-86be-4a3a9c7bfdfe
-    - !<own> 3cc383c7-158b-4e15-9464-1c91d7b59ae3
     - !<own> 047418ab-8c70-4e95-86ee-62f708fa03ea
     - !<own> 628a031a-b06f-426e-b797-4feae30e3814
   Components:
@@ -2990,6 +2991,32 @@
     - !<own> 8cb3dd13-6ebf-41e6-9a23-94a69dd96f87
   Components:
     []
+- !<ScriptComponent/91c2a15d-3b9b-471e-b47a-a4f2c5ba0f4e>
+  PrefabRemaps:
+    []
+  Name: GlazeBenchVoice
+  Enabled: true
+  ScriptAsset: !<reference> 73736021-9381-4b3c-87ce-8635bdeba966
+  ScriptInputsDefault:
+    typedGlaze: true
+    runTypedGlaze: true
+    geminiModel: true
+    timeoutSeconds: true
+    transitionSeconds: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      ui: !<MappingBased.AssignableType_1> 5b27344a-921b-4525-8c99-b91594e5d513
+      glazeMaterial: !<reference.Material> 29c9101a-518b-4b67-87bd-5e79564c15a5
+      typedGlaze: a dark iron tenmoku that breaks rust at the rim
+      runTypedGlaze: false
+      geminiModel: gemini-2.5-flash
+      timeoutSeconds: !<float> 20.000000
+      transitionSeconds: 1.200000
+  ScriptTypes:
+    "":
+      {}
 - !<Text/92065ccb-e158-4131-96bb-014ff371b3b7>
   PrefabRemaps:
     []

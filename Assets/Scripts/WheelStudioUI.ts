@@ -229,6 +229,8 @@ export class WheelStudioUI extends BaseScriptComponent {
   private _onUndo = new Event<void>();
   private _onReset = new Event<void>();
   private _onGlaze = new Event<void>();
+  private _onGlazeMicDown = new Event<void>();
+  private _onGlazeMicUp = new Event<void>();
 
   /** Normalised 0..1; the wiring maps it to radians. */
   get onTwistChanged(): PublicApi<number> { return this._onTwist.publicApi(); }
@@ -239,6 +241,10 @@ export class WheelStudioUI extends BaseScriptComponent {
   get onUndo(): PublicApi<void> { return this._onUndo.publicApi(); }
   get onReset(): PublicApi<void> { return this._onReset.publicApi(); }
   get onGlaze(): PublicApi<void> { return this._onGlaze.publicApi(); }
+  /** Mic button pressed on the Glaze Bench - start listening. */
+  get onGlazeMicDown(): PublicApi<void> { return this._onGlazeMicDown.publicApi(); }
+  /** Mic button released - stop listening and use the transcript. */
+  get onGlazeMicUp(): PublicApi<void> { return this._onGlazeMicUp.publicApi(); }
 
   // ── State ─────────────────────────────────────────────────────────────────
   private fluteCount = 6;
@@ -247,6 +253,9 @@ export class WheelStudioUI extends BaseScriptComponent {
   private twistValueText: Text = null;
   private depthValueText: Text = null;
   private countValueText: Text = null;
+  private glazeTranscriptText: Text = null;
+  private glazeStatusText: Text = null;
+  private glazeStateText: Text = null;
 
   static readonly FLUTE_DEPTH_MAX = 0.35;
   static readonly FLUTE_COUNT_MIN = 3;
@@ -281,6 +290,26 @@ export class WheelStudioUI extends BaseScriptComponent {
     if (this.countValueText) this.countValueText.text = String(this.fluteCount);
   }
 
+  /** Live transcript, written on every ASR partial so the user sees they are heard. */
+  setGlazeTranscript(text: string): void {
+    if (this.glazeStatusText === null) return;
+    this.glazeTranscriptText.text = text && text.length > 0 ? text : "\u2014";
+  }
+
+  /** Status line: listening / thinking / applied / offline reason. */
+  setGlazeStatus(text: string): void {
+    if (this.glazeStatusText === null) return;
+    this.glazeStatusText.text = text;
+  }
+
+  /** WET before a glaze is applied, GLAZED after. */
+  setGlazeState(state: string): void {
+    if (this.glazeStateText === null) return;
+    this.glazeStateText.text = state;
+    this.glazeStateText.textFill.color =
+      state === "GLAZED" ? this.textValue : this.textSecondary;
+  }
+
   // ── Station construction ──────────────────────────────────────────────────
 
   private buildStations(): void {
@@ -302,8 +331,7 @@ export class WheelStudioUI extends BaseScriptComponent {
     const glazeRoot = this.obj(this.sceneObject, "Station_Glaze",
       new vec3(rx, this.stationHeight, rz));
     glazeRoot.getTransform().setLocalRotation(quat.angleAxis(-spread, vec3.up()));
-    this.buildStationMarker(glazeRoot, this.glazeTitle, ICON_GLAZE, this.glazeFill,
-      "Dip, pour, brush");
+    this.buildGlazeBench(glazeRoot);
 
     const kilnRoot = this.obj(this.sceneObject, "Station_Kiln",
       new vec3(-rx, this.stationHeight, rz));
@@ -350,6 +378,83 @@ export class WheelStudioUI extends BaseScriptComponent {
 
     this.stepperRow(content, "FLUTE COUNT");
     this.buttonRow(content);
+  }
+
+  /**
+   * The Glaze Bench is the one interactive side station: hold the mic, speak a
+   * glaze, release. Transcript and status are separate lines so a failed
+   * network call can explain itself without erasing what the user said.
+   */
+  private buildGlazeBench(root: SceneObject): void {
+    const plate = this.plate(root, this.glazeFill);
+    const content = this.obj(root, "Content", new vec3(0, 0, PANEL_CONTENT_Z_LIFT));
+
+    const col = content.createComponent(FlexLayout.getTypeName()) as FlexLayout;
+    col.autoDiscoverItemsOnStart = false;
+    col.onInitialized.add(() => {
+      col.width = SIDE_PANEL_W;
+      col.height = -1;
+      col.direction = FlexDirection.Column;
+      col.alignItems = FlexAlign.Stretch;
+      col.rowGap = 0.55;
+      col.paddingTop = PAD;
+      col.paddingBottom = PAD;
+      col.paddingLeft = PAD;
+      col.paddingRight = PAD;
+    });
+    col.onLayoutComplete.add((r) => {
+      plate.size = new vec2(r.containerWidth, r.containerHeight);
+    });
+
+    this.header(content, this.glazeTitle, ICON_GLAZE, SIDE_INNER_W);
+
+    // State chip
+    this.flexChild(content, {w: SIDE_INNER_W, h: 1.9}, (row) => {
+      this.glazeStateText = this.rowText(row, "WET", "Callout", SIDE_INNER_W,
+        this.textSecondary, HorizontalAlignment.Left);
+    });
+
+    // Live transcript
+    this.flexChild(content, {w: SIDE_INNER_W, h: 2.2}, (row) => {
+      this.glazeTranscriptText = this.rowText(row, "\u2014", "Caption", SIDE_INNER_W,
+        this.textPrimary, HorizontalAlignment.Left);
+    });
+
+    // Status line
+    this.flexChild(content, {w: SIDE_INNER_W, h: 1.9}, (row) => {
+      this.glazeStatusText = this.rowText(row, "Hold the mic and describe a glaze",
+        "Caption", SIDE_INNER_W, this.textSecondary, HorizontalAlignment.Left);
+    });
+
+    // Hold-to-talk. Element exposes onTriggerDown/onTriggerUp for hold; the
+    // onTriggerStart/End pair does not exist here and would silently no-op.
+    this.flexChild(content, {w: SIDE_INNER_W, h: 3.0}, (rowObj) => {
+      const row = this.flexRow(rowObj, SIDE_INNER_W, 3.0, {
+        gap: 0.4, justify: FlexJustify.Center, align: FlexAlign.Center
+      });
+      this.flexChild(row, {w: 9.4, h: 2.6}, (btnObj) => {
+        const btn = btnObj.createComponent(Button.getTypeName()) as Button;
+        btn.onInitialized.add(() => {
+          btn.size = new vec3(9.4, 2.6, 1);
+          this.outlineVisual(btn.visual as RoundedRectangleVisual,
+            this.buttonBorder, this.buttonBorderHot);
+        });
+        const labelObj = this.obj(btnObj, "MicLabel", new vec3(0, 0, BUTTON_LABEL_Z));
+        const t = labelObj.createComponent("Component.Text") as Text;
+        t.text = "HOLD TO SPEAK";
+        t.font = THEME_FONT;
+        t.depthTest = true;
+        applyTextRole(t, "Button");
+        t.textFill.color = this.textPrimary;
+        t.horizontalAlignment = HorizontalAlignment.Center;
+        t.verticalAlignment = VerticalAlignment.Center;
+        t.horizontalOverflow = HorizontalOverflow.Overflow;
+        t.verticalOverflow = VerticalOverflow.Overflow;
+        t.layoutRect = Rect.create(-4.45, 4.45, -1.2, 1.2);
+        btn.onTriggerDown.add(() => this._onGlazeMicDown.invoke());
+        btn.onTriggerUp.add(() => this._onGlazeMicUp.invoke());
+      });
+    });
   }
 
   private buildStationMarker(root: SceneObject, title: string, icon: Texture,

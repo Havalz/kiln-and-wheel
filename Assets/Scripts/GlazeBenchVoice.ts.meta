@@ -1,0 +1,70 @@
+- !<AssetImportMetadata/c048f717-e08c-4b80-a579-ad83be248436>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 73736021-9381-4b3c-87ce-8635bdeba966
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 73736021-9381-4b3c-87ce-8635bdeba966
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> b4abe0d9-5777-497b-a0fb-33c689a76ca5
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/b4abe0d9-5777-497b-a0fb-33c689a76ca5>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: c6277123-f90a-43d9-b5d8-7fe949ef98d6
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    geminiModel: false
+    glazeMaterial: false
+    runTypedGlaze: false
+    timeoutSeconds: false
+    transitionSeconds: false
+    typedGlaze: false
+    ui: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - ui: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      glazeMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      typedGlaze: a dark iron tenmoku that breaks rust at the rim
+      runTypedGlaze: false
+      geminiModel: gemini-2.5-flash
+      timeoutSeconds: !<float> 20.000000
+      transitionSeconds: 1.200000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"Glaze Bench — voice to glaze"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @input AssignableType_1 ui {"hint":"The WHEEL Studio UI panel that owns the Glaze Bench."}'
+    - '// @input Asset.Material glazeMaterial {"hint":"GlazeMat material applied to the lathe."}'
+    - '// @ui {"widget":"group_start", "label":"Editor fallback (no mic in preview)"}'
+    - '// @input string typedGlaze = "a dark iron tenmoku that breaks rust at the rim" {"hint":"Type a glaze description here, then tick Run Typed Glaze. Runs the identical Gemini path as speaking."}'
+    - '// @input bool runTypedGlaze {"hint":"Tick to send the typed description on the next frame. Auto-clears."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Model"}'
+    - '// @input string geminiModel = "gemini-2.5-flash" {"hint":"Gemini model id. Known-good through RSG: gemini-2.0-flash, gemini-2.5-flash, gemini-2.5-pro."}'
+    - '// @input float timeoutSeconds = 20 {"hint":"Hard timeout in seconds. On expiry the bench falls back to a local preset rather than hanging.", "widget":"slider", "min":5, "max":60, "step":1}'
+    - '// @input float transitionSeconds = 1.2 {"hint":"Seconds for the glaze to ease onto the vessel.", "widget":"slider", "min":0.1, "max":4, "step":0.1}'
+    - '// @ui {"widget":"group_end"}'
