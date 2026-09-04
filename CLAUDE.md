@@ -42,7 +42,7 @@ Pinch is the only interaction. No multiplayer, no Sync Kit, no database, no live
 
 ## Known limitations
 
-Simulated pinches reach only *some* SIK targets in Preview: the kiln's FIRE button responds, but the wheel panel's UNDO / RESET / GLAZE / THROW WITH VOICE and the glaze bench's HOLD TO SPEAK receive nothing at all — not even `onHoverEnter` — with the camera aimed straight at them, while manually-positioned interactables outside a layout (shelf slots, the pot's grab capsule) always work; the cause is not layout, height, or the trigger-event pair (all were ruled out by probe), so treat editor triggers as the verified path for panel controls until LEAF lands in P12.
+Simulated pinches never fire on panel buttons laid out inside a FlexLayout (UNDO, RESET, GLAZE, HOLD TO SPEAK, FIRE all affected) — only manually-positioned elements outside a layout (shelf slots) receive them. Editor triggers remain the verified path for FlexLayout-based controls until LEAF in P12.
 
 ## Do not
 
