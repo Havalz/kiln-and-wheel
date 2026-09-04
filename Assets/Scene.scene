@@ -1178,6 +1178,8 @@
   Enabled: true
   ScriptAsset: !<reference> 5943e3c8-736e-46e1-988a-d5bd4bbc62c9
   ScriptInputsDefault:
+    grabHeight: true
+    grabRadius: true
     assumedFloorY: true
   ScriptTypesDefault:
     {}
@@ -1185,6 +1187,9 @@
     "":
       pot: !<reference.SceneObject> 543b00ba-49cd-40af-b327-dd7951b5dd01
       kiln: !<MappingBased.AssignableType_1> 89a877f5-36c6-4385-953c-ef99b401ed73
+      spin: !<reference.ScriptComponent> 11b72f50-6da7-4a25-9541-875bbcaa31c3
+      grabHeight: !<float> 22.000000
+      grabRadius: !<float> 7.000000
       assumedFloorY: !<float> -120.000000
   ScriptTypes:
     "":

@@ -29,8 +29,11 @@
   PackagePolicy: CanBeUnpacked
   ScriptInputsHidden:
     assumedFloorY: false
+    grabHeight: false
+    grabRadius: false
     kiln: false
     pot: false
+    spin: false
   ScriptTypesHidden:
     {}
   ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
@@ -42,6 +45,9 @@
   DefaultScriptInputs:
     - pot: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       kiln: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      spin: !<reference.ScriptComponent> 00000000-0000-0000-0000-000000000000
+      grabHeight: !<float> 22.000000
+      grabRadius: !<float> 7.000000
       assumedFloorY: !<float> -120.000000
   ScriptTypes:
     -
@@ -51,4 +57,9 @@
     - '// @ui {"widget":"separator"}'
     - '// @input SceneObject pot {"hint":"The pot to place."}'
     - '// @input AssignableType_1 kiln {"hint":"Only a fired piece can be placed."}'
+    - "// @input Component.ScriptComponent spin {\"hint\":\"The wheel's Spin. Stopped on placement — a pot standing on a table does not turn.\"}"
+    - '// @ui {"widget":"group_start", "label":"Grab volume"}'
+    - '// @input float grabHeight = 22 {"hint":"Height of the pot in cm. The grab capsule is built to match it."}'
+    - '// @input float grabRadius = 7 {"hint":"Widest radius of the pot in cm."}'
+    - '// @ui {"widget":"group_end"}'
     - '// @input float assumedFloorY = -120 {"hint":"Assumed floor height relative to the user, in cm, used only by the fallback.", "widget":"slider", "min":-200, "max":0, "step":5}'

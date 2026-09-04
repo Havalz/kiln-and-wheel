@@ -17,6 +17,7 @@
  */
 
 import {KilnStation} from "./KilnStation";
+import {Interactable} from "SpectaclesInteractionKit.lspkg/Components/Interaction/Interactable/Interactable";
 
 /** A hit steeper than this is a wall or ceiling, not something to stand a pot on. */
 const MAX_TILT_DEG = 25;
@@ -34,6 +35,21 @@ export class PotPlacement extends BaseScriptComponent {
   @input @allowUndefined @hint("Only a fired piece can be placed.") kiln: KilnStation;
 
   @input
+  @allowUndefined
+  @hint("The wheel's Spin. Stopped on placement — a pot standing on a table does not turn.")
+  spin: ScriptComponent;
+
+  @ui.group_start("Grab volume")
+  @input
+  @hint("Height of the pot in cm. The grab capsule is built to match it.")
+  grabHeight: number = 22.0;
+
+  @input
+  @hint("Widest radius of the pot in cm.")
+  grabRadius: number = 7.0;
+  @ui.group_end
+
+  @input
   @hint("Assumed floor height relative to the user, in cm, used only by the fallback.")
   @widget(new SliderWidget(-200, 0, 5))
   assumedFloorY: number = -120;
@@ -41,6 +57,7 @@ export class PotPlacement extends BaseScriptComponent {
   private worldQuery: any = require("LensStudio:WorldQueryModule");
   private session: any = null;
   private placed = false;
+  private grab: Interactable = null;
 
   onAwake(): void {
     // Session creation belongs in OnStartEvent, not onAwake.
@@ -62,6 +79,63 @@ export class PotPlacement extends BaseScriptComponent {
       print("[Place] could not start hit-test session: " + e);
       this.session = null;
     }
+
+    this.buildGrab();
+  }
+
+  /**
+   * Make the pot itself pinchable. The collider lives on a CHILD rather than on
+   * the pot, because the lathe's origin sits at the foot (local y runs 0..height)
+   * while a capsule is centred on its object - the child carries the half-height
+   * offset so the volume actually wraps the pot.
+   *
+   * The capsule's axis is Y, so the volume is invariant under the wheel's spin.
+   * A box would wobble as the pot turned.
+   */
+  private buildGrab(): void {
+    const host = global.scene.createSceneObject("PotGrab");
+    host.setParent(this.pot);
+    host.getTransform().setLocalPosition(new vec3(0, this.grabHeight / 2, 0));
+
+    const collider = host.createComponent("Physics.ColliderComponent") as any;
+    const shape = Shape.createCapsuleShape();
+    shape.axis = Axis.Y;
+    shape.radius = this.grabRadius;
+    // length is the distance between the two end-cap CENTRES, so the caps add
+    // radius at each end and the total comes to grabHeight.
+    shape.length = Math.max(0.1, this.grabHeight - this.grabRadius * 2);
+    collider.shape = shape;
+    collider.debugDrawEnabled = false;
+
+    this.grab = host.createComponent(Interactable.getTypeName()) as Interactable;
+    this.grab.targetingMode = 3; // Direct + Indirect: pinch on device, click in Editor.
+
+    // Release, not press, is what drops the pot. onTriggerEndOutside and
+    // onTriggerCanceled are bound too: letting go while the cursor has drifted
+    // off the pot is still letting go, and without them the pot would be stuck
+    // held with no way to drop it.
+    const drop = () => this.onReleased();
+    this.grab.onTriggerEnd.add(drop);
+    this.grab.onTriggerEndOutside.add(drop);
+    this.grab.onTriggerCanceled.add(drop);
+
+    // A wet pot is not grabbable: the eight shaping handles occupy the same
+    // volume, and a pot collider live at the same time would steal their grabs.
+    if (this.kiln) {
+      this.grab.enabled = this.kiln.isFired();
+      this.kiln.onFired.add(() => {
+        this.grab.enabled = true;
+        print("[Place] piece fired - pot is now grabbable.");
+      });
+    } else {
+      this.grab.enabled = true;
+    }
+  }
+
+  private onReleased(): void {
+    if (this.kiln && !this.kiln.isFired()) return;
+    print("[Place] released - dropping the piece.");
+    this.place();
   }
 
   // ── Public ────────────────────────────────────────────────────────────────
@@ -124,6 +198,9 @@ export class PotPlacement extends BaseScriptComponent {
     // True real-world scale: the lathe already builds in centimetres, so the
     // pot is its authored size and must not be rescaled to "fit".
     tr.setWorldScale(new vec3(1, 1, 1));
+    // A pot standing on a table does not keep turning. The wheel's spin is a
+    // throwing affordance and it has no meaning once the piece is in the room.
+    if (this.spin) this.spin.enabled = false;
     this.placed = true;
   }
 
