@@ -5119,7 +5119,7 @@
     {}
   ScriptInputs:
     "":
-      githubUser: your-github-user
+      githubUser: havalz
       qrImage: !<reference.Image> 00000000-0000-0000-0000-000000000000
       qrMesh: !<reference.RenderMeshVisual> 00000000-0000-0000-0000-000000000000
       urlText: !<reference.Text> 00000000-0000-0000-0000-000000000000
