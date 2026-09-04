@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WHEEL — a thrown piece</title>
+<style>
+  :root{
+    --ink:#1c1917; --muted:#78716c; --line:#e7e5e4;
+    --bg:#faf8f5; --panel:#fffefc; --accent:#b45309;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;max-width:100%;overflow-x:hidden}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    display:flex; flex-direction:column;
+    -webkit-text-size-adjust:100%;
+  }
+  #stage{flex:1 1 auto; min-height:0; position:relative; touch-action:none}
+  #stage canvas{display:block; width:100%; height:100%}
+  #meta{
+    width:100%; padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    background:var(--panel); border-top:1px solid var(--line);
+  }
+  h1{margin:0 0 2px; font-size:19px; letter-spacing:-.01em}
+  .dims{color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums}
+  .row{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:12px}
+  button{
+    min-width:0; min-height:44px; padding:0 6px;
+    border:1px solid var(--line); border-radius:10px; background:#fff;
+    color:var(--ink); font:600 12px/1.2 inherit; letter-spacing:.02em;
+    white-space:normal; overflow-wrap:anywhere;
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  button:active{background:#f5f5f4}
+  button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  #note{
+    margin:10px 0 0; padding:9px 11px; border-radius:9px;
+    background:#fef3c7; color:#78350f; font-size:12.5px; display:none;
+  }
+  #note.show{display:block}
+  #err{position:absolute; inset:0; display:grid; place-content:center;
+       padding:24px; text-align:center; color:var(--muted); font-size:14px}
+  #err[hidden]{display:none}
+  @media(min-width:760px){
+    body{flex-direction:row-reverse}
+    #meta{width:320px; border-top:0; border-left:1px solid var(--line); overflow:auto}
+  }
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<div id="stage"><div id="err" hidden>Loading…</div></div>
+<div id="meta">
+  <h1 id="name">—</h1>
+  <div class="dims" id="dims"></div>
+  <p id="note"></p>
+  <div class="row">
+    <button id="stl" class="primary">DOWNLOAD STL</button>
+    <button id="obj">DOWNLOAD OBJ</button>
+    <button id="link">COPY LINK</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {STLExporter} from 'three/addons/exporters/STLExporter.js';
+import {OBJExporter} from 'three/addons/exporters/OBJExporter.js';
+
+// ─── Codec — the exact inverse of Assets/Scripts/export/ProfileCodec.ts ──────
+// 35 bytes: [0] version, [1..16] 8 points (y,r), [17] twist01, [18] fluteCount,
+// [19] fluteDepth, [20] height cm, [21..26] bottom rgb + top rgb,
+// [27..30] roughness/metallic/crackle/drip, [31..34] seed uint32 big-endian.
+const B64='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const CODEC_BYTES=35, CODEC_VERSION=1, FLUTE_DEPTH_MAX=0.35;
+const CONTROL_POINTS=8, PROFILE_SAMPLES=48, RADIAL=48;
+
+// radiusScale is NOT in the payload. The Lens lathes with 7.0cm at full radius,
+// so the same constant is assumed here; absolute width is a convention shared
+// with the Lens, not data recovered from the code.
+const RADIUS_SCALE=7.0;
+
+function fromB64Url(s){
+  if(typeof s!=='string'||!s) return null;
+  const out=[]; let acc=0, bits=0;
+  for(const ch of s){
+    const v=B64.indexOf(ch);
+    if(v<0) return null;
+    acc=(acc<<6)|v; bits+=6;
+    if(bits>=8){ bits-=8; out.push((acc>>bits)&255); }
+  }
+  return out;
+}
+function decode(str){
+  const b=fromB64Url(str);
+  if(!b||b.length!==CODEC_BYTES||b[0]!==CODEC_VERSION) return null;
+  const d=i=>b[i]/255;
+  const pts=[];
+  for(let i=0;i<CONTROL_POINTS;i++) pts.push({y:d(1+i*2), r:d(2+i*2)});
+  return {
+    points:pts,
+    twist01:d(17), fluteCount:b[18], fluteDepth:b[19]*(FLUTE_DEPTH_MAX/255), height:b[20],
+    bottom:[d(21),d(22),d(23)], top:[d(24),d(25),d(26)],
+    roughness:d(27), metallic:d(28), crackle:d(29), drip:d(30),
+    seed:((b[31]<<24)|(b[32]<<16)|(b[33]<<8)|b[34])>>>0
+  };
+}
+
+// Deterministic name, mirroring ShelfStore.localName so a piece is called the
+// same thing here as it is on the wheel. UNSIGNED shifts: the seed fills the
+// full uint32 range and a signed shift yields a negative index.
+const FORMW=["Vessel","Jar","Bottle","Bowl","Urn","Flask","Pitcher","Vase"];
+const QUALW=["Quiet","Wide","Tall","Narrow","Heavy","Pale","Slow","Still","Warm","Plain","Rough","Soft"];
+const PLACEW=["Morning","Kiln","Ash","River","Field","Winter","Harvest","Dusk","Stone","Hearth"];
+const localName=seed=>{
+  const s=(Math.floor(seed)>>>0)||1;
+  return `${QUALW[s%QUALW.length]} ${FORMW[(s>>>3)%FORMW.length]}, ${PLACEW[(s>>>7)%PLACEW.length]}`;
+};
+
+// Catmull-Rom with the same phantom endpoints ProfileModel uses, so the 48
+// samples here are the 48 samples the Lens lathed.
+function resample(pts){
+  const n=pts.length, segs=n-1, out=[];
+  const b={y:2*pts[0].y-pts[1].y, r:2*pts[0].r-pts[1].r};
+  const a={y:2*pts[n-1].y-pts[n-2].y, r:2*pts[n-1].r-pts[n-2].r};
+  for(let s=0;s<PROFILE_SAMPLES;s++){
+    const u=(s/(PROFILE_SAMPLES-1))*segs;
+    const seg=Math.min(Math.max(Math.floor(u),0),segs-1), t=u-seg;
+    const p0=seg-1<0?b:pts[seg-1], p1=pts[seg], p2=pts[seg+1], p3=seg+2>n-1?a:pts[seg+2];
+    const t2=t*t, t3=t2*t;
+    const f=(q0,q1,q2,q3)=>0.5*(2*q1+(-q0+q2)*t+(2*q0-5*q1+4*q2-q3)*t2+(-q0+3*q1-3*q2+q3)*t3);
+    let y=f(p0.y,p1.y,p2.y,p3.y), r=f(p0.r,p1.r,p2.r,p3.r);
+    if(!isFinite(y))y=0; if(!isFinite(r))r=0;
+    out.push({y:Math.min(Math.max(y,0),1), r:Math.max(r,0)});
+  }
+  return out;
+}
+
+// ─── Geometry ───────────────────────────────────────────────────────────────
+// LatheGeometry gives the revolved topology; the vertex positions are then
+// rewritten with the Lens's own twist and flute formulas, which a plain lathe
+// cannot express (both make the radius depend on the angle, not just on height).
+function buildGeometry(p){
+  const samples=resample(p.points);
+  const profile=samples.map(s=>new THREE.Vector2(Math.max(s.r*RADIUS_SCALE,1e-4), s.y*p.height));
+  const geo=new THREE.LatheGeometry(profile,RADIAL);
+  const pos=geo.attributes.position;
+  const twist=p.twist01*Math.PI*2;
+  // LatheGeometry lays vertices out as index = i*profileLength + j.
+  for(let i=0;i<=RADIAL;i++){
+    for(let j=0;j<PROFILE_SAMPLES;j++){
+      const t=j/(PROFILE_SAMPLES-1);
+      const angle=(i/RADIAL)*Math.PI*2+twist*t;
+      const baseR=samples[j].r*RADIUS_SCALE;
+      let r=baseR;
+      if(p.fluteDepth!==0&&p.fluteCount!==0){
+        r=baseR*(1+p.fluteDepth*Math.cos(p.fluteCount*angle));
+        if(r<0) r=0;
+      }
+      pos.setXYZ(i*PROFILE_SAMPLES+j, r*Math.cos(angle), samples[j].y*p.height, r*Math.sin(angle));
+    }
+  }
+  pos.needsUpdate=true;
+  geo.computeVertexNormals();
+
+  // Vertical gradient as vertex colours. dripAmount biases the mix so a runny
+  // glaze carries the foot colour further up, the way gravity glaze pools.
+  const col=[], bot=new THREE.Color(...p.bottom), top=new THREE.Color(...p.top), c=new THREE.Color();
+  const bias=1+p.drip*1.5;
+  for(let k=0;k<pos.count;k++){
+    const t=Math.min(Math.max(pos.getY(k)/Math.max(p.height,1e-6),0),1);
+    c.copy(bot).lerp(top,Math.pow(t,bias));
+    col.push(c.r,c.g,c.b);
+  }
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  return {geo,samples};
+}
+
+// ─── Scene ──────────────────────────────────────────────────────────────────
+const stage=document.getElementById('stage'), errEl=document.getElementById('err');
+let renderer=null;
+try{
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  stage.appendChild(renderer.domElement);
+}catch(e){
+  renderer=null;
+}
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xfaf8f5);
+const camera=new THREE.PerspectiveCamera(38,1,0.1,2000);
+const controls=renderer?new OrbitControls(camera,renderer.domElement):null;
+if(controls){ controls.enableDamping=true; controls.enablePan=false; }
+
+// Three lights, no HDR: key, cool fill, rim. Plus a hemisphere so the inside
+// of an open form does not read as a black hole.
+scene.add(new THREE.HemisphereLight(0xffffff,0xd6d3d1,1.5));
+const key=new THREE.DirectionalLight(0xfff6e8,2.1); key.position.set(6,12,9); scene.add(key);
+const fill=new THREE.DirectionalLight(0xdbeafe,0.9); fill.position.set(-9,4,6); scene.add(fill);
+const rim=new THREE.DirectionalLight(0xffffff,1.3); rim.position.set(-4,7,-11); scene.add(rim);
+
+let mesh=null;
+function show(p){
+  if(mesh){ scene.remove(mesh); mesh.geometry.dispose(); mesh.material.dispose(); }
+  const {geo,samples}=buildGeometry(p);
+  const mat=new THREE.MeshPhysicalMaterial({
+    vertexColors:true, roughness:p.roughness, metalness:p.metallic,
+    clearcoat:1-p.roughness, clearcoatRoughness:p.roughness,
+    side:THREE.DoubleSide   // the rim is open; without this you see through it
+  });
+  mesh=new THREE.Mesh(geo,mat);
+  scene.add(mesh);   // harmless without a renderer; the exporters read the mesh
+
+  const maxR=samples.reduce((m,s)=>Math.max(m,s.r),0)*RADIUS_SCALE;
+  const widest=maxR*(1+Math.max(p.fluteDepth,0));
+  camera.position.set(widest*2.6+8,p.height*0.72,widest*2.6+14);
+  if(controls){ controls.target.set(0,p.height/2,0); controls.update(); }
+
+  document.getElementById('name').textContent=localName(p.seed);
+  document.getElementById('dims').textContent=
+    `${p.height.toFixed(1)} cm tall · ${(widest*2).toFixed(1)} cm across · seed ${p.seed}`;
+}
+
+function resize(){
+  const w=stage.clientWidth,h=stage.clientHeight;
+  if(!renderer||!w||!h) return;
+  renderer.setSize(w,h,false);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);
+if(renderer){
+  (function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); })();
+}
+
+// ─── Load ───────────────────────────────────────────────────────────────────
+// A real fired piece, so an empty or broken link still shows a pot rather than
+// an error. Anything unreadable falls back to it with a plain explanation.
+const SAMPLE='AQBNGnVH23PHnmvHXuaK_8wAAwAWnrir0eXdcwA_hCjQx50';
+const note=document.getElementById('note');
+function load(){
+  const h=location.hash||'';
+  const raw=h.startsWith('#v1.')?h.slice(4):'';
+  let p=raw?decode(raw):null;
+  if(!p){
+    p=decode(SAMPLE);
+    note.className='show';
+    note.textContent=raw
+      ? 'That link could not be read, so this is a sample piece. Scan the code again from the Kiln.'
+      : 'No piece in this link — showing a sample. Fire a pot in WHEEL and scan its code.';
+  }else{
+    note.className='';
+  }
+  errEl.hidden=!!renderer;
+  if(!renderer) errEl.textContent='No 3D preview on this browser — the details and downloads below still work.';
+  show(p);
+}
+addEventListener('hashchange',load);
+resize(); load();
+
+// ─── Export ─────────────────────────────────────────────────────────────────
+function save(data,name,type){
+  const url=URL.createObjectURL(new Blob([data],{type}));
+  const a=document.createElement('a');
+  a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+const slug=()=>localName(decode((location.hash.slice(4))||SAMPLE)?.seed??0)
+  .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'wheel-piece';
+document.getElementById('stl').onclick=()=>{
+  if(!mesh) return;
+  save(new STLExporter().parse(mesh,{binary:true}),`${slug()}.stl`,'application/octet-stream');
+};
+document.getElementById('obj').onclick=()=>{
+  if(!mesh) return;
+  save(new OBJExporter().parse(mesh),`${slug()}.obj`,'text/plain');
+};
+document.getElementById('link').onclick=async e=>{
+  const b=e.currentTarget, was=b.textContent;
+  try{ await navigator.clipboard.writeText(location.href); b.textContent='COPIED'; }
+  catch{ b.textContent='COPY FAILED'; }
+  setTimeout(()=>{b.textContent=was;},1400);
+};
+
+// Offline after first load. Registration failing is harmless — the page just
+// needs the network again next time.
+if('serviceWorker' in navigator){
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
