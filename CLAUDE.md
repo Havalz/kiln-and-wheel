@@ -40,6 +40,10 @@ Pinch is the only interaction. No multiplayer, no Sync Kit, no database, no live
 
 **Waveguide display:** black renders as transparent, so dark values vanish on the glasses. Use bright, high-saturation palettes only.
 
+## Known limitations
+
+Simulated pinches reach only *some* SIK targets in Preview: the kiln's FIRE button responds, but the wheel panel's UNDO / RESET / GLAZE / THROW WITH VOICE and the glaze bench's HOLD TO SPEAK receive nothing at all — not even `onHoverEnter` — with the camera aimed straight at them, while manually-positioned interactables outside a layout (shelf slots, the pot's grab capsule) always work; the cause is not layout, height, or the trigger-event pair (all were ruled out by probe), so treat editor triggers as the verified path for panel controls until LEAF lands in P12.
+
 ## Do not
 
 - Never run parallel agents that mutate the open Lens Studio scene at once — it is shared mutable state with no locking.
