@@ -1,0 +1,54 @@
+- !<AssetImportMetadata/a3f89c76-f816-49b2-ba0f-3b396fe6ac37>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 5943e3c8-736e-46e1-988a-d5bd4bbc62c9
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 5943e3c8-736e-46e1-988a-d5bd4bbc62c9
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> e5f2eb75-140c-4ff5-b155-8875e3a9fad6
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/e5f2eb75-140c-4ff5-b155-8875e3a9fad6>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 5e4bc4d9-a764-45e7-8a8b-b3a8e509c7a6
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    assumedFloorY: false
+    kiln: false
+    pot: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - pot: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      kiln: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      assumedFloorY: !<float> -120.000000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"Pot placement — snap to a real surface"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @input SceneObject pot {"hint":"The pot to place."}'
+    - '// @input AssignableType_1 kiln {"hint":"Only a fired piece can be placed."}'
+    - '// @input float assumedFloorY = -120 {"hint":"Assumed floor height relative to the user, in cm, used only by the fallback.", "widget":"slider", "min":-200, "max":0, "step":5}'

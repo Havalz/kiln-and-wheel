@@ -17,6 +17,7 @@
  */
 
 import animate from "SpectaclesInteractionKit.lspkg/Utils/animate";
+import Event, {PublicApi} from "SpectaclesInteractionKit.lspkg/Utils/Event";
 
 import {WheelStudioUI} from "./WheelStudioUI";
 import {LatheMesher} from "./core/LatheMesher";
@@ -57,6 +58,10 @@ export class KilnStation extends BaseScriptComponent {
   @input @allowUndefined @hint("Metallic contraction ticks during cooling.") coolingTickTrack: AudioTrackAsset;
   @input @allowUndefined @hint("Warm ceramic ping at the reveal.") revealChimeTrack: AudioTrackAsset;
   @ui.group_end
+
+  private _onFired = new Event<FiringResult>();
+  /** Fires once at the reveal, carrying the seed and the transformed glaze. */
+  get onFired(): PublicApi<FiringResult> { return this._onFired.publicApi(); }
 
   /** Seed of the firing that produced the current piece, 0 until fired. */
   private storedSeed = 0;
@@ -202,6 +207,7 @@ export class KilnStation extends BaseScriptComponent {
 
     // The piece is finished: it can no longer be reshaped.
     this.lockPiece();
+    this._onFired.invoke(this.result);
   }
 
   /**

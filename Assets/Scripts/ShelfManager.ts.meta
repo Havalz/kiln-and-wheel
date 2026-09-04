@@ -1,0 +1,62 @@
+- !<AssetImportMetadata/12866f61-2fef-432a-b65f-fb79141c630c>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> 512174b3-af95-4450-879c-5a361bc0fccf
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> 512174b3-af95-4450-879c-5a361bc0fccf
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> e74cfd6a-5882-4e11-b165-314d7ccfba72
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/e74cfd6a-5882-4e11-b165-314d7ccfba72>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: e0437e5b-912d-455d-bc92-a5e91f053b13
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    geminiModel: false
+    glazeMaterial: false
+    kiln: false
+    mesher: false
+    timeoutSeconds: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - kiln: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      mesher: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      glazeMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      geminiModel: gemini-2.5-flash
+      timeoutSeconds: !<float> 20.000000
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"Shelf — persistence, naming, critique"}'
+    - '// @ui {"widget":"separator"}'
+    - // @input AssignableType_1 kiln
+    - // @input AssignableType_2 mesher
+    - '// @input Asset.Material glazeMaterial {"hint":"GlazeMat, so a reloaded piece gets its glaze back."}'
+    - '// @ui {"widget":"group_start", "label":"Naming"}'
+    - '// @input string geminiModel = "gemini-2.5-flash" {"hint":"Gemini model id. Known-good through RSG: gemini-2.0-flash, gemini-2.5-flash, gemini-2.5-pro."}'
+    - '// @input float timeoutSeconds = 20 {"hint":"Hard timeout in seconds. On expiry the piece keeps its local name and the critique is hidden.", "widget":"slider", "min":5, "max":60, "step":1}'
+    - '// @ui {"widget":"group_end"}'

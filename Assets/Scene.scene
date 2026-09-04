@@ -501,6 +501,8 @@
     - !<own> 91c2a15d-3b9b-471e-b47a-a4f2c5ba0f4e
     - !<own> 89a877f5-36c6-4385-953c-ef99b401ed73
     - !<own> a6e084b2-d483-4ca1-aba7-f161df9737bf
+    - !<own> 2c87b86f-7acd-4da1-97a4-4ace69817baa
+    - !<own> cf9b0301-ee12-44f1-9db4-9ed64a9f63c3
 - !<SceneObject/08e3cc22-f2e1-49fb-9ddc-145fe6547ce3>
   PrefabRemaps:
     []
@@ -1169,6 +1171,24 @@
     []
   Components:
     - !<own> b859d33c-03b0-41ed-a2a8-e75d6c3b7c7a
+- !<ScriptComponent/2c87b86f-7acd-4da1-97a4-4ace69817baa>
+  PrefabRemaps:
+    []
+  Name: PotPlacement
+  Enabled: true
+  ScriptAsset: !<reference> 5943e3c8-736e-46e1-988a-d5bd4bbc62c9
+  ScriptInputsDefault:
+    assumedFloorY: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      pot: !<reference.SceneObject> 543b00ba-49cd-40af-b327-dd7951b5dd01
+      kiln: !<MappingBased.AssignableType_1> 89a877f5-36c6-4385-953c-ef99b401ed73
+      assumedFloorY: !<float> -120.000000
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/2dae2a27-8ce6-466a-8bff-622195c1b3a8>
   PrefabRemaps:
     []
@@ -4659,6 +4679,27 @@
     - !<own> 650dc0b4-8d22-4aab-87b4-d8e56fb59a67
   Components:
     - !<own> 0847d2bb-a13f-4c4a-a404-169f67308f6f
+- !<ScriptComponent/cf9b0301-ee12-44f1-9db4-9ed64a9f63c3>
+  PrefabRemaps:
+    []
+  Name: ShelfManager
+  Enabled: true
+  ScriptAsset: !<reference> 512174b3-af95-4450-879c-5a361bc0fccf
+  ScriptInputsDefault:
+    geminiModel: true
+    timeoutSeconds: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      kiln: !<MappingBased.AssignableType_1> 89a877f5-36c6-4385-953c-ef99b401ed73
+      mesher: !<MappingBased.AssignableType_2> 44f286cc-431d-410b-a0dd-f0929b2b8d25
+      glazeMaterial: !<reference.Material> 29c9101a-518b-4b67-87bd-5e79564c15a5
+      geminiModel: gemini-2.5-flash
+      timeoutSeconds: !<float> 20.000000
+  ScriptTypes:
+    "":
+      {}
 - !<ScriptComponent/cff3e83b-78d2-4c50-bb79-d0c276a6cc34>
   PrefabRemaps:
     []
