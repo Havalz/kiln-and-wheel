@@ -37,6 +37,8 @@ import {Slider} from "SpectaclesUIKit.lspkg/Scripts/Components/Slider/Slider";
 import {GradientParameters, RoundedRectangle} from "SpectaclesUIKit.lspkg/Scripts/Visuals/RoundedRectangle/RoundedRectangle";
 import {RoundedRectangleVisual} from "SpectaclesUIKit.lspkg/Scripts/Visuals/RoundedRectangle/RoundedRectangleVisual";
 import Event, {PublicApi} from "SpectaclesInteractionKit.lspkg/Utils/Event";
+import {ShelfPot} from "./core/ShelfPot";
+import type {ShelfPiece} from "./core/ShelfStore";
 
 // ── Assets ───────────────────────────────────────────────────────────────────
 const THEME_FONT = requireAsset("../Fonts/Google Sans Flex.ttf") as Font;
@@ -85,6 +87,12 @@ function roleSize(role: TextRole, distanceCm: number = TEXT_DISTANCE): number {
   return TYPE_SCALE[role].size * FONT_SIZE_SCALE * (distanceCm / 110);
 }
 
+/** Shelf labels get one line; longer names are elided rather than wrapped. */
+function trimName(name: string): string {
+  if (!name) return "";
+  return name.length > 11 ? name.substring(0, 10) + "\u2026" : name;
+}
+
 function applyTextRole(t: Text, role: TextRole, distanceCm: number = TEXT_DISTANCE): void {
   t.size = roleSize(role, distanceCm);
   (t as Text & {weight?: number}).weight = TYPE_SCALE[role].weight;
@@ -110,6 +118,12 @@ const DEG = Math.PI / 180;
  * 19 cm panel measuring 287 cm across).
  */
 const WHEEL_INNER_W = WHEEL_PANEL_W - PAD * 2;
+// Six slots across the same width as the wheel panel. SHELF_VISIBLE in
+// ShelfStore is the authority on the count; this must match it.
+const SHELF_SLOTS = 6;
+const SHELF_SLOT_W = 2.85;
+const SHELF_SLOT_H = 5.4;
+const SHELF_POT_H = 3.1;
 const SIDE_INNER_W = SIDE_PANEL_W - PAD * 2;
 
 @component
@@ -159,6 +173,11 @@ export class WheelStudioUI extends BaseScriptComponent {
   @hint("Kiln panel fill.")
   @widget(new ColorWidget())
   kilnFill: vec4 = new vec4(1.0, 0.36, 0.22, 0.52);
+
+  @input
+  @hint("Shelf panel fill. Cooler than the three working stations - finished work is not part of the active loop.")
+  @widget(new ColorWidget())
+  shelfFill: vec4 = new vec4(0.62, 0.42, 1.0, 0.46);
 
   @input
   @hint("Panel edge colour. Brighter than the fill so the panel reads as a solid object.")
@@ -216,10 +235,15 @@ export class WheelStudioUI extends BaseScriptComponent {
   buttonBorderHot: vec4 = new vec4(0.35, 1.0, 0.72, 1.0);
   @ui.group_end
 
+  @input
+  @hint("GlazeMat. Cloned per shelf pot so each miniature keeps its own recipe.")
+  glazeMaterial: Material;
+
   @ui.group_start("Labels")
   @input @hint("Title of the centre station.") wheelTitle: string = "THE WHEEL";
   @input @hint("Title of the right-hand station.") glazeTitle: string = "THE GLAZE BENCH";
   @input @hint("Title of the left-hand station.") kilnTitle: string = "THE KILN";
+  @input @hint("Title of the shelf overhead.") shelfTitle: string = "THE SHELF";
   @ui.group_end
 
   // ── Events (UI -> wiring) ──────────────────────────────────────────────────
@@ -232,6 +256,7 @@ export class WheelStudioUI extends BaseScriptComponent {
   private _onGlazeMicDown = new Event<void>();
   private _onGlazeMicUp = new Event<void>();
   private _onFire = new Event<void>();
+  private _onShelfPick = new Event<number>();
 
   /** Normalised 0..1; the wiring maps it to radians. */
   get onTwistChanged(): PublicApi<number> { return this._onTwist.publicApi(); }
@@ -248,6 +273,8 @@ export class WheelStudioUI extends BaseScriptComponent {
   get onGlazeMicUp(): PublicApi<void> { return this._onGlazeMicUp.publicApi(); }
   /** FIRE pressed on the Kiln. */
   get onFire(): PublicApi<void> { return this._onFire.publicApi(); }
+  /** A shelf pot was pinched. Payload is its index in the displayed row. */
+  get onShelfPick(): PublicApi<number> { return this._onShelfPick.publicApi(); }
 
   // ── State ─────────────────────────────────────────────────────────────────
   private fluteCount = 6;
@@ -261,6 +288,10 @@ export class WheelStudioUI extends BaseScriptComponent {
   private glazeStateText: Text = null;
   private kilnStateText: Text = null;
   private kilnStatusText: Text = null;
+  private shelfSlots: {root: SceneObject; pot: ShelfPot; label: Text; button: Button}[] = [];
+  private shelfPieces: ShelfPiece[] = [];
+  private shelfEmptyText: Text = null;
+  private shelfNoteText: Text = null;
   private lastGlazeName = "Celadon Crackle";
   private wheelControls: Slider[] = [];
   private wheelButtons: Button[] = [];
@@ -351,6 +382,31 @@ export class WheelStudioUI extends BaseScriptComponent {
     }
   }
 
+  /**
+   * Render the shelf row. Each slot builds a real miniature of the stored
+   * profile in that piece's own glaze, so the potter recognises their work by
+   * its silhouette. Slots past the end of the list are hidden, not blanked.
+   */
+  setShelfPieces(pieces: ShelfPiece[]): void {
+    this.shelfPieces = pieces || [];
+    const n = Math.min(this.shelfPieces.length, this.shelfSlots.length);
+    for (let i = 0; i < this.shelfSlots.length; i++) {
+      const slot = this.shelfSlots[i];
+      const has = i < n;
+      slot.root.enabled = has;
+      if (!has) continue;
+      const piece = this.shelfPieces[i];
+      slot.pot.setPiece(piece);
+      slot.label.text = trimName(piece.name);
+    }
+    if (this.shelfEmptyText) this.shelfEmptyText.enabled = n === 0;
+    // The note belongs to the newest piece; it is the one the user just made.
+    if (this.shelfNoteText) {
+      const newest = n > 0 ? this.shelfPieces[0] : null;
+      this.shelfNoteText.text = newest && newest.note ? newest.note : "";
+    }
+  }
+
   // ── Station construction ──────────────────────────────────────────────────
 
   private buildStations(): void {
@@ -373,6 +429,14 @@ export class WheelStudioUI extends BaseScriptComponent {
       new vec3(rx, this.stationHeight, rz));
     glazeRoot.getTransform().setLocalRotation(quat.angleAxis(-spread, vec3.up()));
     this.buildGlazeBench(glazeRoot);
+
+    // The shelf sits above the wheel, tilted down: finished work lives overhead,
+    // out of the way of the piece being thrown.
+    const shelfRoot = this.obj(this.sceneObject, "Station_Shelf",
+      new vec3(0, 12, -(d * 0.95)));
+    shelfRoot.getTransform().setLocalRotation(
+      quat.angleAxis(-14 * DEG, vec3.right()));
+    this.buildShelf(shelfRoot);
 
     const kilnRoot = this.obj(this.sceneObject, "Station_Kiln",
       new vec3(-rx, this.stationHeight, rz));
@@ -559,6 +623,106 @@ export class WheelStudioUI extends BaseScriptComponent {
         btn.onTriggerUp.add(() => this._onFire.invoke());
       });
     });
+  }
+
+  /**
+   * The shelf: a row of finished pots the user can pinch to put back on the
+   * wheel. Laid out by hand rather than with FlexLayout because the slots hold
+   * lathe meshes, and FlexItem only measures 2D UI elements - a mesh child
+   * reports no size and the row collapses.
+   */
+  private buildShelf(root: SceneObject): void {
+    const plate = this.plate(root, this.shelfFill);
+    const panelH = SHELF_SLOT_H + ROW_H * 1.15 + 4.2 + PAD * 2;
+    plate.onInitialized.add(() => {
+      plate.size = new vec2(WHEEL_PANEL_W, panelH);
+    });
+
+    const content = this.obj(root, "Content", new vec3(0, 0, PANEL_CONTENT_Z_LIFT));
+    const topY = panelH / 2 - PAD;
+
+    this.freeText(content, this.shelfTitle, "Subheadline", this.textPrimary,
+      new vec3(0, topY - ROW_H * 0.55, 0), WHEEL_INNER_W, HorizontalAlignment.Center);
+
+    // Empty state. Overlays the row area; hidden as soon as a piece exists.
+    this.shelfEmptyText = this.freeText(content, "Nothing fired yet", "Caption",
+      this.textSecondary, new vec3(0, topY - ROW_H * 1.15 - SHELF_SLOT_H / 2, 0),
+      WHEEL_INNER_W, HorizontalAlignment.Center);
+
+    const rowY = topY - ROW_H * 1.15 - SHELF_SLOT_H / 2;
+    const pitch = WHEEL_INNER_W / SHELF_SLOTS;
+    for (let i = 0; i < SHELF_SLOTS; i++) {
+      const x = (i - (SHELF_SLOTS - 1) / 2) * pitch;
+      const slotObj = this.obj(content, "Slot" + i, new vec3(x, rowY, 0));
+
+      const btn = slotObj.createComponent(Button.getTypeName()) as Button;
+      btn.onInitialized.add(() => {
+        btn.size = new vec3(SHELF_SLOT_W, SHELF_SLOT_H, 1);
+        // Kill the button's own plate. Its gradient assignment does not take on
+        // these cells and the fallback is UIKit's near-black, which is a hole
+        // in the world on the waveguide. The collider is a separate child, so
+        // dropping the visual costs the hit target nothing.
+        const rr = slotObj.getComponent("Component.RenderMeshVisual") as RenderMeshVisual;
+        if (rr) rr.enabled = false;
+      });
+
+      // The pot sits in front of the cell and is anchored by its foot, so pots
+      // of different heights all stand on the same shelf line rather than
+      // floating centred.
+      const potHost = this.obj(slotObj, "Pot",
+        new vec3(0, -SHELF_SLOT_H / 2 + 1.15, ICON_Z));
+      const pot = new ShelfPot(potHost, this.glazeMaterial, SHELF_POT_H);
+
+      const label = this.freeText(slotObj, "", "Caption", this.textSecondary,
+        new vec3(0, -SHELF_SLOT_H / 2 - 0.55, BUTTON_LABEL_Z),
+        SHELF_SLOT_W + 0.5, HorizontalAlignment.Center);
+
+      // Hover feedback in light rather than in a frame: the label goes bright
+      // and the pot swells. Nothing here can paint a dark pixel.
+      const potTr = potHost.getTransform();
+      btn.onHoverEnter.add(() => {
+        label.textFill.color = this.buttonBorderHot;
+        potTr.setLocalScale(new vec3(1.14, 1.14, 1.14));
+      });
+      btn.onHoverExit.add(() => {
+        label.textFill.color = this.textSecondary;
+        potTr.setLocalScale(vec3.one());
+      });
+
+      const index = i;
+      btn.onTriggerUp.add(() => {
+        if (index < this.shelfPieces.length) this._onShelfPick.invoke(index);
+      });
+
+      slotObj.enabled = false;
+      this.shelfSlots.push({root: slotObj, pot: pot, label: label, button: btn});
+    }
+
+    // The critique for the newest piece. Two lines of room; empty when the
+    // naming call failed, which is the documented "hide the note" behaviour.
+    this.shelfNoteText = this.freeText(content, "", "Caption", this.textSecondary,
+      new vec3(0, -panelH / 2 + PAD + 1.0, 0), WHEEL_INNER_W, HorizontalAlignment.Center);
+  }
+
+  /**
+   * Text placed at an explicit local position rather than by a layout. Used
+   * where a FlexLayout would be the wrong tool - see buildShelf.
+   */
+  private freeText(parent: SceneObject, text: string, role: TextRole, color: vec4,
+      pos: vec3, widthCm: number, align: HorizontalAlignment): Text {
+    const so = this.obj(parent, "Text", pos);
+    const t = so.createComponent("Component.Text") as Text;
+    t.text = text;
+    t.font = THEME_FONT;
+    t.depthTest = true;
+    applyTextRole(t, role);
+    t.textFill.color = color;
+    t.horizontalAlignment = align;
+    t.verticalAlignment = VerticalAlignment.Center;
+    t.horizontalOverflow = HorizontalOverflow.Wrap;
+    t.verticalOverflow = VerticalOverflow.Overflow;
+    t.layoutRect = Rect.create(-widthCm / 2, widthCm / 2, -1.1, 1.1);
+    return t;
   }
 
   private buildStationMarker(root: SceneObject, title: string, icon: Texture,

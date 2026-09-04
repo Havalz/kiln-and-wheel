@@ -18,6 +18,7 @@
  */
 
 import {PROFILE_SAMPLES, ProfileModel} from "./ProfileModel";
+import type {ProfilePoint} from "./ProfileModel";
 
 const TWO_PI = Math.PI * 2;
 
@@ -31,7 +32,7 @@ const RADIAL_LOW = 16;
  * One level of detail: its builder, its pre-built index buffer, and all the
  * scratch buffers a rebuild needs. Everything here is allocated exactly once.
  */
-class LatheLod {
+export class LatheLod {
   readonly cols: number;
   readonly sideVertexCount: number;
   readonly capCenterIndex: number;
@@ -139,6 +140,222 @@ class LatheLod {
 
     return indices;
   }
+}
+
+/** The five shape knobs a lathe rebuild reads. */
+export interface LatheShapeParams {
+  height: number;
+  radiusScale: number;
+  twist: number;
+  fluteDepth: number;
+  fluteCount: number;
+}
+
+/**
+ * Full vertex rewrite for one LOD. Touches vertices only -- never the index
+ * buffer, never the builder allocation.
+ */
+export function writeLatheVertices(lod: LatheLod, samples: ProfilePoint[],
+  params: LatheShapeParams): void {
+  const rings = lod.rings;
+  const radial = lod.radial;
+  const cols = lod.cols;
+
+  const height = params.height;
+  const radiusScale = params.radiusScale;
+  const twist = params.twist;
+  const fluteDepth = params.fluteDepth;
+  const fluteCount = params.fluteCount;
+
+  const posX = lod.posX;
+  const posY = lod.posY;
+  const posZ = lod.posZ;
+
+  // 1. Positions.
+  for (let ring = 0; ring < rings; ring++) {
+    const t = ring / (rings - 1);
+    const s = samples[ring];
+    const y = s.y * height;
+    const baseR = s.r * radiusScale;
+    const rowBase = ring * cols;
+    const twistAtT = twist * t;
+
+    for (let col = 0; col < radial; col++) {
+      const angle = (col / radial) * TWO_PI + twistAtT;
+      let radius = baseR;
+      if (fluteDepth !== 0 && fluteCount !== 0) {
+        radius = baseR * (1 + fluteDepth * Math.cos(fluteCount * angle));
+        if (radius < 0) {
+          radius = 0;
+        }
+      }
+      const vi = rowBase + col;
+      posX[vi] = radius * Math.cos(angle);
+      posY[vi] = y;
+      posZ[vi] = radius * Math.sin(angle);
+    }
+
+    // The seam column is an exact copy of column 0 rather than a recomputed
+    // angle of 2*PI. With a non-integer fluteCount the flute term does not
+    // repeat over a full turn, so recomputing would open a hairline crack.
+    const seam = rowBase + radial;
+    posX[seam] = posX[rowBase];
+    posY[seam] = posY[rowBase];
+    posZ[seam] = posZ[rowBase];
+  }
+
+  // 2. Reset the normal accumulators (reused, never reallocated).
+  const nrmX = lod.nrmX;
+  const nrmY = lod.nrmY;
+  const nrmZ = lod.nrmZ;
+  nrmX.fill(0);
+  nrmY.fill(0);
+  nrmZ.fill(0);
+
+  // 3. Accumulate un-normalized (area weighted) face normals from the side
+  //    quads into the logical buffer. Cap faces are excluded on purpose --
+  //    the cap carries its own hard -Y normal.
+  for (let ring = 0; ring < rings - 1; ring++) {
+    const row0 = ring * cols;
+    const row1 = (ring + 1) * cols;
+    const nRow0 = ring * radial;
+    const nRow1 = (ring + 1) * radial;
+
+    for (let col = 0; col < cols - 1; col++) {
+      const a = row0 + col;
+      const b = row1 + col;
+      const c = row1 + col + 1;
+      const d = row0 + col + 1;
+
+      const colL = col % radial;
+      const colR = (col + 1) % radial;
+      const na = nRow0 + colL;
+      const nb = nRow1 + colL;
+      const nc = nRow1 + colR;
+      const nd = nRow0 + colR;
+
+      // Triangle (a, b, d)
+      let e1x = posX[b] - posX[a];
+      let e1y = posY[b] - posY[a];
+      let e1z = posZ[b] - posZ[a];
+      let e2x = posX[d] - posX[a];
+      let e2y = posY[d] - posY[a];
+      let e2z = posZ[d] - posZ[a];
+      let fx = e1y * e2z - e1z * e2y;
+      let fy = e1z * e2x - e1x * e2z;
+      let fz = e1x * e2y - e1y * e2x;
+
+      nrmX[na] += fx;
+      nrmY[na] += fy;
+      nrmZ[na] += fz;
+      nrmX[nb] += fx;
+      nrmY[nb] += fy;
+      nrmZ[nb] += fz;
+      nrmX[nd] += fx;
+      nrmY[nd] += fy;
+      nrmZ[nd] += fz;
+
+      // Triangle (b, c, d)
+      e1x = posX[c] - posX[b];
+      e1y = posY[c] - posY[b];
+      e1z = posZ[c] - posZ[b];
+      e2x = posX[d] - posX[b];
+      e2y = posY[d] - posY[b];
+      e2z = posZ[d] - posZ[b];
+      fx = e1y * e2z - e1z * e2y;
+      fy = e1z * e2x - e1x * e2z;
+      fz = e1x * e2y - e1y * e2x;
+
+      nrmX[nb] += fx;
+      nrmY[nb] += fy;
+      nrmZ[nb] += fz;
+      nrmX[nc] += fx;
+      nrmY[nc] += fy;
+      nrmZ[nc] += fz;
+      nrmX[nd] += fx;
+      nrmY[nd] += fy;
+      nrmZ[nd] += fz;
+    }
+  }
+
+  // 4. Normalize. A degenerate ring (radius 0, e.g. a closed base point)
+  //    accumulates nothing, so fall back to straight up.
+  const logicalCount = rings * radial;
+  for (let i = 0; i < logicalCount; i++) {
+    const x = nrmX[i];
+    const y = nrmY[i];
+    const z = nrmZ[i];
+    const lenSq = x * x + y * y + z * z;
+    if (lenSq > 1e-12) {
+      const inv = 1 / Math.sqrt(lenSq);
+      nrmX[i] = x * inv;
+      nrmY[i] = y * inv;
+      nrmZ[i] = z * inv;
+    } else {
+      nrmX[i] = 0;
+      nrmY[i] = 1;
+      nrmZ[i] = 0;
+    }
+  }
+
+  // 5. Write side vertices. Both seam copies (col 0 and col == radial) read
+  //    the same logical normal, so the shading is continuous across the UV
+  //    seam even though the positions are duplicated.
+  const builder = lod.builder;
+  const v = lod.vtx;
+  for (let ring = 0; ring < rings; ring++) {
+    const t = ring / (rings - 1);
+    const rowBase = ring * cols;
+    const nRow = ring * radial;
+    for (let col = 0; col < cols; col++) {
+      const vi = rowBase + col;
+      const ni = nRow + (col % radial);
+      v[0] = posX[vi];
+      v[1] = posY[vi];
+      v[2] = posZ[vi];
+      v[3] = nrmX[ni];
+      v[4] = nrmY[ni];
+      v[5] = nrmZ[ni];
+      v[6] = col / radial;
+      v[7] = t;
+      builder.setVertexInterleaved(vi, v);
+    }
+  }
+
+  // 6. Cap vertices. Separate copies of ring 0 so the hard -Y normal never
+  //    smears into the side shading. Top rim is intentionally left open.
+  const baseY = samples[0].y * height;
+  v[0] = 0;
+  v[1] = baseY;
+  v[2] = 0;
+  v[3] = 0;
+  v[4] = -1;
+  v[5] = 0;
+  v[6] = 0.5;
+  v[7] = 0.5;
+  builder.setVertexInterleaved(lod.capCenterIndex, v);
+
+  for (let col = 0; col < cols; col++) {
+    const src = col; // ring 0
+    const angle = (col / radial) * TWO_PI;
+    v[0] = posX[src];
+    v[1] = posY[src];
+    v[2] = posZ[src];
+    v[3] = 0;
+    v[4] = -1;
+    v[5] = 0;
+    v[6] = 0.5 + 0.5 * Math.cos(angle);
+    v[7] = 0.5 + 0.5 * Math.sin(angle);
+    builder.setVertexInterleaved(lod.capRimIndex + col, v);
+  }
+
+  if (!builder.isValid()) {
+    print("LatheMesher: mesh data invalid, skipping updateMesh().");
+    return;
+  }
+
+  builder.updateMesh();
+  lod.stale = false;
 }
 
 @component
@@ -300,210 +517,13 @@ export class LatheMesher extends BaseScriptComponent {
     this.renderMeshVisual.mesh = this.active.mesh;
   }
 
-  /**
-   * Full vertex rewrite for one LOD. Touches vertices only -- never the index
-   * buffer, never the builder allocation.
-   */
   private rebuild(lod: LatheLod): void {
-    const samples = this.model.getSamples();
-    const rings = lod.rings;
-    const radial = lod.radial;
-    const cols = lod.cols;
-
-    const height = this.height;
-    const radiusScale = this.radiusScale;
-    const twist = this.twist;
-    const fluteDepth = this.fluteDepth;
-    const fluteCount = this.fluteCount;
-
-    const posX = lod.posX;
-    const posY = lod.posY;
-    const posZ = lod.posZ;
-
-    // 1. Positions.
-    for (let ring = 0; ring < rings; ring++) {
-      const t = ring / (rings - 1);
-      const s = samples[ring];
-      const y = s.y * height;
-      const baseR = s.r * radiusScale;
-      const rowBase = ring * cols;
-      const twistAtT = twist * t;
-
-      for (let col = 0; col < radial; col++) {
-        const angle = (col / radial) * TWO_PI + twistAtT;
-        let radius = baseR;
-        if (fluteDepth !== 0 && fluteCount !== 0) {
-          radius = baseR * (1 + fluteDepth * Math.cos(fluteCount * angle));
-          if (radius < 0) {
-            radius = 0;
-          }
-        }
-        const vi = rowBase + col;
-        posX[vi] = radius * Math.cos(angle);
-        posY[vi] = y;
-        posZ[vi] = radius * Math.sin(angle);
-      }
-
-      // The seam column is an exact copy of column 0 rather than a recomputed
-      // angle of 2*PI. With a non-integer fluteCount the flute term does not
-      // repeat over a full turn, so recomputing would open a hairline crack.
-      const seam = rowBase + radial;
-      posX[seam] = posX[rowBase];
-      posY[seam] = posY[rowBase];
-      posZ[seam] = posZ[rowBase];
-    }
-
-    // 2. Reset the normal accumulators (reused, never reallocated).
-    const nrmX = lod.nrmX;
-    const nrmY = lod.nrmY;
-    const nrmZ = lod.nrmZ;
-    nrmX.fill(0);
-    nrmY.fill(0);
-    nrmZ.fill(0);
-
-    // 3. Accumulate un-normalized (area weighted) face normals from the side
-    //    quads into the logical buffer. Cap faces are excluded on purpose --
-    //    the cap carries its own hard -Y normal.
-    for (let ring = 0; ring < rings - 1; ring++) {
-      const row0 = ring * cols;
-      const row1 = (ring + 1) * cols;
-      const nRow0 = ring * radial;
-      const nRow1 = (ring + 1) * radial;
-
-      for (let col = 0; col < cols - 1; col++) {
-        const a = row0 + col;
-        const b = row1 + col;
-        const c = row1 + col + 1;
-        const d = row0 + col + 1;
-
-        const colL = col % radial;
-        const colR = (col + 1) % radial;
-        const na = nRow0 + colL;
-        const nb = nRow1 + colL;
-        const nc = nRow1 + colR;
-        const nd = nRow0 + colR;
-
-        // Triangle (a, b, d)
-        let e1x = posX[b] - posX[a];
-        let e1y = posY[b] - posY[a];
-        let e1z = posZ[b] - posZ[a];
-        let e2x = posX[d] - posX[a];
-        let e2y = posY[d] - posY[a];
-        let e2z = posZ[d] - posZ[a];
-        let fx = e1y * e2z - e1z * e2y;
-        let fy = e1z * e2x - e1x * e2z;
-        let fz = e1x * e2y - e1y * e2x;
-
-        nrmX[na] += fx;
-        nrmY[na] += fy;
-        nrmZ[na] += fz;
-        nrmX[nb] += fx;
-        nrmY[nb] += fy;
-        nrmZ[nb] += fz;
-        nrmX[nd] += fx;
-        nrmY[nd] += fy;
-        nrmZ[nd] += fz;
-
-        // Triangle (b, c, d)
-        e1x = posX[c] - posX[b];
-        e1y = posY[c] - posY[b];
-        e1z = posZ[c] - posZ[b];
-        e2x = posX[d] - posX[b];
-        e2y = posY[d] - posY[b];
-        e2z = posZ[d] - posZ[b];
-        fx = e1y * e2z - e1z * e2y;
-        fy = e1z * e2x - e1x * e2z;
-        fz = e1x * e2y - e1y * e2x;
-
-        nrmX[nb] += fx;
-        nrmY[nb] += fy;
-        nrmZ[nb] += fz;
-        nrmX[nc] += fx;
-        nrmY[nc] += fy;
-        nrmZ[nc] += fz;
-        nrmX[nd] += fx;
-        nrmY[nd] += fy;
-        nrmZ[nd] += fz;
-      }
-    }
-
-    // 4. Normalize. A degenerate ring (radius 0, e.g. a closed base point)
-    //    accumulates nothing, so fall back to straight up.
-    const logicalCount = rings * radial;
-    for (let i = 0; i < logicalCount; i++) {
-      const x = nrmX[i];
-      const y = nrmY[i];
-      const z = nrmZ[i];
-      const lenSq = x * x + y * y + z * z;
-      if (lenSq > 1e-12) {
-        const inv = 1 / Math.sqrt(lenSq);
-        nrmX[i] = x * inv;
-        nrmY[i] = y * inv;
-        nrmZ[i] = z * inv;
-      } else {
-        nrmX[i] = 0;
-        nrmY[i] = 1;
-        nrmZ[i] = 0;
-      }
-    }
-
-    // 5. Write side vertices. Both seam copies (col 0 and col == radial) read
-    //    the same logical normal, so the shading is continuous across the UV
-    //    seam even though the positions are duplicated.
-    const builder = lod.builder;
-    const v = lod.vtx;
-    for (let ring = 0; ring < rings; ring++) {
-      const t = ring / (rings - 1);
-      const rowBase = ring * cols;
-      const nRow = ring * radial;
-      for (let col = 0; col < cols; col++) {
-        const vi = rowBase + col;
-        const ni = nRow + (col % radial);
-        v[0] = posX[vi];
-        v[1] = posY[vi];
-        v[2] = posZ[vi];
-        v[3] = nrmX[ni];
-        v[4] = nrmY[ni];
-        v[5] = nrmZ[ni];
-        v[6] = col / radial;
-        v[7] = t;
-        builder.setVertexInterleaved(vi, v);
-      }
-    }
-
-    // 6. Cap vertices. Separate copies of ring 0 so the hard -Y normal never
-    //    smears into the side shading. Top rim is intentionally left open.
-    const baseY = samples[0].y * height;
-    v[0] = 0;
-    v[1] = baseY;
-    v[2] = 0;
-    v[3] = 0;
-    v[4] = -1;
-    v[5] = 0;
-    v[6] = 0.5;
-    v[7] = 0.5;
-    builder.setVertexInterleaved(lod.capCenterIndex, v);
-
-    for (let col = 0; col < cols; col++) {
-      const src = col; // ring 0
-      const angle = (col / radial) * TWO_PI;
-      v[0] = posX[src];
-      v[1] = posY[src];
-      v[2] = posZ[src];
-      v[3] = 0;
-      v[4] = -1;
-      v[5] = 0;
-      v[6] = 0.5 + 0.5 * Math.cos(angle);
-      v[7] = 0.5 + 0.5 * Math.sin(angle);
-      builder.setVertexInterleaved(lod.capRimIndex + col, v);
-    }
-
-    if (!builder.isValid()) {
-      print("LatheMesher: mesh data invalid, skipping updateMesh().");
-      return;
-    }
-
-    builder.updateMesh();
-    lod.stale = false;
+    writeLatheVertices(lod, this.model.getSamples(), {
+      height: this.height,
+      radiusScale: this.radiusScale,
+      twist: this.twist,
+      fluteDepth: this.fluteDepth,
+      fluteCount: this.fluteCount
+    });
   }
 }

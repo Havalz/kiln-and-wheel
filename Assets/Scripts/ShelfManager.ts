@@ -21,6 +21,8 @@ import Event, {PublicApi} from "SpectaclesInteractionKit.lspkg/Utils/Event";
 
 import {KilnStation} from "./KilnStation";
 import {LatheMesher} from "./core/LatheMesher";
+import {WheelStudioUI} from "./WheelStudioUI";
+import {applyGlazeToPass} from "./core/GlazeApply";
 import {
   NAME_SYSTEM_INSTRUCTION,
   addPiece,
@@ -42,6 +44,8 @@ export class ShelfManager extends BaseScriptComponent {
   @input kiln: KilnStation;
   @input mesher: LatheMesher;
   @input @hint("GlazeMat, so a reloaded piece gets its glaze back.") glazeMaterial: Material;
+  @input @hint("Studio UI. Optional - the shelf still persists without a panel to draw it on.")
+  ui: WheelStudioUI;
 
   @ui.group_start("Naming")
   @input
@@ -67,6 +71,18 @@ export class ShelfManager extends BaseScriptComponent {
   }
 
   private onStart(): void {
+    // Subscribe before the first load so the initial contents reach the panel
+    // through the same path every later change takes.
+    if (this.ui) {
+      this._onShelfChanged.publicApi().add(() => this.ui.setShelfPieces(this.getRecent()));
+      this.ui.onShelfPick.add((index: number) => {
+        const recent = this.getRecent();
+        if (index >= 0 && index < recent.length) this.reload(recent[index]);
+      });
+    } else {
+      print("[Shelf] no UI assigned - pieces persist but nothing draws them.");
+    }
+
     this.shelf = this.load();
     print("[Shelf] loaded " + this.shelf.length + " piece(s) from storage");
     this._onShelfChanged.invoke(this.shelf);
@@ -115,19 +131,8 @@ export class ShelfManager extends BaseScriptComponent {
     const model = this.mesher.getModel();
     model.deserialize(piece.profileBytes);
 
-    const p = this.glazeMaterial ? (this.glazeMaterial.mainPass as any) : null;
-    if (p) {
-      const g = piece.glazeParams;
-      p.baseColorBottom = new vec4(g.baseColorBottom[0], g.baseColorBottom[1], g.baseColorBottom[2], g.baseColorBottom[3]);
-      p.baseColorTop = new vec4(g.baseColorTop[0], g.baseColorTop[1], g.baseColorTop[2], g.baseColorTop[3]);
-      p.rimTint = new vec4(g.rimTint[0], g.rimTint[1], g.rimTint[2], g.rimTint[3]);
-      p.roughness = g.roughness;
-      p.metallic = g.metallic;
-      p.crackleScale = g.crackleScale;
-      p.crackleIntensity = g.crackleIntensity;
-      p.dripAmount = g.dripAmount;
-      p.glossBands = g.glossBands;
-      p.firedGlow = 0;
+    if (this.glazeMaterial) {
+      applyGlazeToPass(this.glazeMaterial.mainPass, piece.glazeParams, 0);
     }
     print("[Shelf] reloaded \"" + piece.name + "\" (seed " + piece.seed + ")");
     return true;

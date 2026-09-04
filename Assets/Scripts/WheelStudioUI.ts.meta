@@ -33,10 +33,13 @@
     buttonFill: false
     buttonHot: false
     glazeFill: false
+    glazeMaterial: false
     glazeTitle: false
     kilnFill: false
     kilnTitle: false
     panelEdge: false
+    shelfFill: false
+    shelfTitle: false
     sliderFill: false
     sliderKnob: false
     sliderTrack: false
@@ -65,6 +68,7 @@
       wheelFill: !<Vec4> {x: 1.000000, y: 0.720000, z: 0.340000, w: 0.340000}
       glazeFill: !<Vec4> {x: 0.380000, y: 0.900000, z: 1.000000, w: 0.320000}
       kilnFill: !<Vec4> {x: 1.000000, y: 0.520000, z: 0.400000, w: 0.340000}
+      shelfFill: !<Vec4> {x: 0.620000, y: 0.420000, z: 1.000000, w: 0.460000}
       panelEdge: !<Vec4> {x: 1.000000, y: 0.930000, z: 0.780000, w: 0.850000}
       textPrimary: !<Vec4> {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
       textSecondary: !<Vec4> {x: 1.000000, y: 0.970000, z: 0.910000, w: 0.860000}
@@ -76,9 +80,11 @@
       sliderKnob: !<Vec4> {x: 1.000000, y: 1.000000, z: 0.970000, w: 1.000000}
       buttonBorder: !<Vec4> {x: 1.000000, y: 0.620000, z: 0.160000, w: 1.000000}
       buttonBorderHot: !<Vec4> {x: 0.350000, y: 1.000000, z: 0.720000, w: 1.000000}
+      glazeMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
       wheelTitle: THE WHEEL
       glazeTitle: THE GLAZE BENCH
       kilnTitle: THE KILN
+      shelfTitle: THE SHELF
   ScriptTypes:
     -
       {}
@@ -95,6 +101,7 @@
     - '// @input vec4 wheelFill = {1,0.6,0.2,0.5} {"hint":"Wheel panel fill. Bright and translucent - black would render invisible.", "widget":"color"}'
     - '// @input vec4 glazeFill = {0.15,0.8,1,0.5} {"hint":"Glaze bench panel fill.", "widget":"color"}'
     - '// @input vec4 kilnFill = {1,0.36,0.22,0.52} {"hint":"Kiln panel fill.", "widget":"color"}'
+    - '// @input vec4 shelfFill = {0.62,0.42,1,0.46} {"hint":"Shelf panel fill. Cooler than the three working stations - finished work is not part of the active loop.", "widget":"color"}'
     - '// @input vec4 panelEdge = {1,0.93,0.78,0.85} {"hint":"Panel edge colour. Brighter than the fill so the panel reads as a solid object.", "widget":"color"}'
     - '// @input vec4 textPrimary = {1,1,1,1} {"hint":"Primary text. Near-white so it out-luminates the fill behind it.", "widget":"color"}'
     - '// @input vec4 textSecondary = {1,0.97,0.91,0.86} {"hint":"Secondary text - warm near-white, still high luminance.", "widget":"color"}'
@@ -107,8 +114,10 @@
     - '// @input vec4 buttonBorder = {1,0.62,0.16,1} {"hint":"Outline colour of the action buttons. Their faces are transparent, so this border and the label are the only lit pixels in the cell.", "widget":"color"}'
     - '// @input vec4 buttonBorderHot = {0.35,1,0.72,1} {"hint":"Action button outline while hovered or pressed.", "widget":"color"}'
     - '// @ui {"widget":"group_end"}'
+    - '// @input Asset.Material glazeMaterial {"hint":"GlazeMat. Cloned per shelf pot so each miniature keeps its own recipe."}'
     - '// @ui {"widget":"group_start", "label":"Labels"}'
     - '// @input string wheelTitle = "THE WHEEL" {"hint":"Title of the centre station."}'
     - '// @input string glazeTitle = "THE GLAZE BENCH" {"hint":"Title of the right-hand station."}'
     - '// @input string kilnTitle = "THE KILN" {"hint":"Title of the left-hand station."}'
+    - '// @input string shelfTitle = "THE SHELF" {"hint":"Title of the shelf overhead."}'
     - '// @ui {"widget":"group_end"}'

@@ -33,6 +33,7 @@
     kiln: false
     mesher: false
     timeoutSeconds: false
+    ui: false
   ScriptTypesHidden:
     {}
   ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
@@ -45,6 +46,7 @@
     - kiln: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
       mesher: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
       glazeMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      ui: !<MappingBased.AssignableType_3> 00000000-0000-0000-0000-000000000000
       geminiModel: gemini-2.5-flash
       timeoutSeconds: !<float> 20.000000
   ScriptTypes:
@@ -56,6 +58,7 @@
     - // @input AssignableType_1 kiln
     - // @input AssignableType_2 mesher
     - '// @input Asset.Material glazeMaterial {"hint":"GlazeMat, so a reloaded piece gets its glaze back."}'
+    - '// @input AssignableType_3 ui {"hint":"Studio UI. Optional - the shelf still persists without a panel to draw it on."}'
     - '// @ui {"widget":"group_start", "label":"Naming"}'
     - '// @input string geminiModel = "gemini-2.5-flash" {"hint":"Gemini model id. Known-good through RSG: gemini-2.0-flash, gemini-2.5-flash, gemini-2.5-pro."}'
     - '// @input float timeoutSeconds = 20 {"hint":"Hard timeout in seconds. On expiry the piece keeps its local name and the critique is hidden.", "widget":"slider", "min":5, "max":60, "step":1}'

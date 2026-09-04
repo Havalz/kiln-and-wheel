@@ -123,10 +123,14 @@ const PLACE_WORDS = ["Morning", "Kiln", "Ash", "River", "Field", "Winter", "Harv
  * times out, errors, or answers with something unparseable.
  */
 export function localName(seed: number): string {
-  const s = Math.abs(Math.floor(seed)) || 1;
+  // UNSIGNED shifts. deriveSeed() is FNV-1a, which produces the full unsigned
+  // 32-bit range, so roughly half of all seeds sit above 2^31. A signed >>
+  // makes those negative, the modulo then returns a negative index, and the
+  // name comes out as "Rough undefined, undefined".
+  const s = (Math.floor(seed) >>> 0) || 1;
   const q = QUALITY_WORDS[s % QUALITY_WORDS.length];
-  const f = FORM_WORDS[(s >> 3) % FORM_WORDS.length];
-  const p = PLACE_WORDS[(s >> 7) % PLACE_WORDS.length];
+  const f = FORM_WORDS[(s >>> 3) % FORM_WORDS.length];
+  const p = PLACE_WORDS[(s >>> 7) % PLACE_WORDS.length];
   return q + " " + f + ", " + p;
 }
 
