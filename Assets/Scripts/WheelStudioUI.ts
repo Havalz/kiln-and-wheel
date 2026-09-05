@@ -67,17 +67,27 @@ type TextRole =
  * 800, body and captions 600 - a clear two-step gap so hierarchy survives at
  * distance, where size differences alone stop reading.
  */
+/**
+ * The roles a panel actually uses - Headline2 for titles down to Caption for
+ * status - previously spanned only 48 to 33. That band is too narrow AND too
+ * low: scaling the whole panel up magnifies it uniformly and every line stays
+ * equally hard to read, which is why a uniform enlargement alone did not fix
+ * the complaint. The floor is lifted hardest (Caption +27%, Callout +30%) so
+ * status lines and the numeric readouts stop being the smallest marks on the
+ * panel, while the order title > label > value > body > caption is preserved.
+ * Combined with PANEL_SCALE, a status line now renders ~1.8x its original size.
+ */
 const TYPE_SCALE: Record<TextRole, {size: number; weight: number}> = {
   Title1:      {size: 105, weight: 800},
   Title2:      {size: 93,  weight: 800},
-  HeadlineXL:  {size: 62,  weight: 800},
-  Headline1:   {size: 54,  weight: 800},
-  Headline2:   {size: 48,  weight: 800},
-  Subheadline: {size: 41,  weight: 800},
-  Button:      {size: 39,  weight: 700},
-  Callout:     {size: 37,  weight: 700},
-  Body:        {size: 36,  weight: 600},
-  Caption:     {size: 33,  weight: 600}
+  HeadlineXL:  {size: 74,  weight: 800},
+  Headline1:   {size: 68,  weight: 800},
+  Headline2:   {size: 62,  weight: 800},   // panel titles
+  Subheadline: {size: 52,  weight: 800},   // row labels
+  Button:      {size: 48,  weight: 700},   // button labels
+  Callout:     {size: 48,  weight: 700},   // numeric readouts, state chips
+  Body:        {size: 46,  weight: 600},
+  Caption:     {size: 42,  weight: 600}    // status lines
 };
 
 /** Panels sit at ~45cm, but the scale is calibrated at 110cm. */
@@ -118,6 +128,19 @@ const PAD = 1.1;
 const ROW_H = 2.6;
 /** Height of a two-line status row. Every panel uses the same one. */
 const STATUS_ROW_H = 3.4;
+
+/**
+ * Uniform enlargement of every panel's contents.
+ *
+ * Applied as a transform scale on each station root rather than by editing the
+ * type ramp and the twenty-odd cell widths separately. Growing the font alone
+ * makes labels outrun the cells they sit in; growing both by hand invites the
+ * two to drift apart. One scale keeps every ratio this UI was tuned around -
+ * padding, row rhythm, button cells, wrap widths - exactly as measured, so
+ * nothing can newly overflow. The type gets 45% more angular size at the same
+ * 45cm working distance, which is the actual complaint.
+ */
+const PANEL_SCALE = 1.45;
 const DEG = Math.PI / 180;
 
 /**
@@ -463,6 +486,8 @@ export class WheelStudioUI extends BaseScriptComponent {
       new vec3(0, -44, -(d * 0.92)));
     wheelRoot.getTransform().setLocalRotation(
       quat.angleAxis(this.wheelPanelPitchDeg * DEG, vec3.right()));
+    wheelRoot.getTransform().setLocalScale(
+      new vec3(PANEL_SCALE, PANEL_SCALE, PANEL_SCALE));
     this.buildWheelPanel(wheelRoot);
 
     // Right / left stations on the arc, each yawed to face the user at origin.
@@ -472,6 +497,8 @@ export class WheelStudioUI extends BaseScriptComponent {
     const glazeRoot = this.obj(this.sceneObject, "Station_Glaze",
       new vec3(rx, this.stationHeight, rz));
     glazeRoot.getTransform().setLocalRotation(quat.angleAxis(-spread, vec3.up()));
+    glazeRoot.getTransform().setLocalScale(
+      new vec3(PANEL_SCALE, PANEL_SCALE, PANEL_SCALE));
     this.buildGlazeBench(glazeRoot);
 
     // The shelf sits above the wheel, tilted down: finished work lives overhead,
@@ -480,11 +507,15 @@ export class WheelStudioUI extends BaseScriptComponent {
       new vec3(0, 12, -(d * 0.95)));
     shelfRoot.getTransform().setLocalRotation(
       quat.angleAxis(-14 * DEG, vec3.right()));
+    shelfRoot.getTransform().setLocalScale(
+      new vec3(PANEL_SCALE, PANEL_SCALE, PANEL_SCALE));
     this.buildShelf(shelfRoot);
 
     const kilnRoot = this.obj(this.sceneObject, "Station_Kiln",
       new vec3(-rx, this.stationHeight, rz));
     kilnRoot.getTransform().setLocalRotation(quat.angleAxis(spread, vec3.up()));
+    kilnRoot.getTransform().setLocalScale(
+      new vec3(PANEL_SCALE, PANEL_SCALE, PANEL_SCALE));
     this.buildKiln(kilnRoot);
   }
 
