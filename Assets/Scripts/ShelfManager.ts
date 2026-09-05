@@ -35,7 +35,8 @@ import {
 import type {ShelfPiece} from "./core/ShelfStore";
 import type {FiringResult} from "./core/FiringSeed";
 
-const STORAGE_KEY = "wheel.shelf.v1";
+/** Exported so tests address the same key rather than re-typing the literal. */
+export const STORAGE_KEY = "wheel.shelf.v1";
 
 @component
 export class ShelfManager extends BaseScriptComponent {

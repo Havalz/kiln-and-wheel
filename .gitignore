@@ -41,3 +41,6 @@ scratchpad/
 # build-sfx / build-music scratch: one-shot generator scripts with absolute,
 # machine-specific paths. Kept locally for reruns, never shipped.
 tempAssetGen/
+
+# Added by Lens Studio (LEAF plugin)
+leaf_plugin_settings.json
