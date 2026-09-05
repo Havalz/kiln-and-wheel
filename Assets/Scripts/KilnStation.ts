@@ -202,7 +202,9 @@ export class KilnStation extends BaseScriptComponent {
     });
 
     this.ui.setKilnState("FIRED");
-    this.ui.setKilnStatus("Seed " + this.storedSeed + " — " + this.result.summary);
+    // "#seed · summary" rather than "Seed N — summary": the panel is 13cm wide
+    // and every character saved is one the wrap does not have to spend.
+    this.ui.setKilnStatus("#" + this.storedSeed + " · " + this.result.summary);
     print("[Kiln] REVEAL seed=" + this.storedSeed + " " + this.result.summary);
 
     // The piece is finished: it can no longer be reshaped.

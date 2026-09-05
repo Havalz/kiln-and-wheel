@@ -27,6 +27,14 @@ export const SHARE_URL_TEMPLATE = "https://{user}.github.io/wheel-specs/#v1.{pay
 
 /** Quiet zone in modules. Four is the spec minimum; below it, scanners fail. */
 export const QUIET_ZONE_MODULES = 4;
+/**
+ * What the panel says when the code is there. The URL is deliberately NOT
+ * shown in this case: the Lens has no browser, so the link cannot be tapped -
+ * it is a wall of base64url the wearer can do nothing with. The QR is the
+ * interaction. The URL still reaches the Logger every time, and comes back on
+ * screen only when the code failed and it is the sole way to reach the piece.
+ */
+export const QR_CAPTION = "Scan to open your pot in 3D";
 
 /** Aim for this square texture size; the module scale is the integer that fits. */
 export const TARGET_TEXTURE_PX = 384;
@@ -317,6 +325,7 @@ export class QRTexture extends BaseScriptComponent {
       this.setQrVisible(false);
       print("[QR] generation failed, showing the text URL only: " + e);
       this.setNote("Code unavailable — use the link below.");
+      this.setUrlVisible(true);
       return;
     }
 
@@ -337,8 +346,13 @@ export class QRTexture extends BaseScriptComponent {
       this.qrTexture = texture;
       const applied = this.applyTexture(texture);
       this.setQrVisible(applied);
-      // A recovered render must not keep an old warning on screen.
-      this.setNote(applied ? "" : "Code unavailable — use the link below.");
+      if (applied) {
+        this.setNote(QR_CAPTION);
+        this.setUrlVisible(false);
+      } else {
+        this.setNote("Code unavailable — use the link below.");
+        this.setUrlVisible(true);
+      }
       if (applied) {
         print(
           "[QR] rendered " +
@@ -354,10 +368,16 @@ export class QRTexture extends BaseScriptComponent {
       this.setQrVisible(false);
       print("[QR] render failed, showing the text URL only: " + e);
       this.setNote("Code unavailable — use the link below.");
+      this.setUrlVisible(true);
     }
   }
 
   /** Hide the QR panel. The URL text is left alone - it is the fallback. */
+  /** The URL is a fallback surface, not a caption. Hidden when the code works. */
+  private setUrlVisible(visible: boolean): void {
+    if (this.urlText) this.urlText.getSceneObject().enabled = visible;
+  }
+
   /** One short sentence above the URL, cleared when the code renders. */
   private setNote(message: string): void {
     if (this.noteText) this.noteText.text = message;

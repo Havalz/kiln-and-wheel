@@ -60,17 +60,24 @@ type TextRole =
   | "Title1" | "Title2" | "HeadlineXL" | "Headline1" | "Headline2"
   | "Subheadline" | "Button" | "Callout" | "Body" | "Caption";
 
+/**
+ * Google Sans Flex runs 100-900. Everything here sits in the upper half: on a
+ * waveguide a glyph is a thin line of emitted light, and at 45cm and 30 degrees
+ * off-axis a 500 weight softens into the panel fill behind it. Titles carry
+ * 800, body and captions 600 - a clear two-step gap so hierarchy survives at
+ * distance, where size differences alone stop reading.
+ */
 const TYPE_SCALE: Record<TextRole, {size: number; weight: number}> = {
-  Title1:      {size: 105, weight: 700},
-  Title2:      {size: 93,  weight: 700},
-  HeadlineXL:  {size: 62,  weight: 700},
-  Headline1:   {size: 54,  weight: 700},
-  Headline2:   {size: 48,  weight: 700},
-  Subheadline: {size: 41,  weight: 700},
-  Button:      {size: 39,  weight: 500},
-  Callout:     {size: 39,  weight: 700},
-  Body:        {size: 39,  weight: 500},
-  Caption:     {size: 38,  weight: 500}
+  Title1:      {size: 105, weight: 800},
+  Title2:      {size: 93,  weight: 800},
+  HeadlineXL:  {size: 62,  weight: 800},
+  Headline1:   {size: 54,  weight: 800},
+  Headline2:   {size: 48,  weight: 800},
+  Subheadline: {size: 41,  weight: 800},
+  Button:      {size: 39,  weight: 700},
+  Callout:     {size: 37,  weight: 700},
+  Body:        {size: 36,  weight: 600},
+  Caption:     {size: 33,  weight: 600}
 };
 
 /** Panels sit at ~45cm, but the scale is calibrated at 110cm. */
@@ -109,6 +116,8 @@ const WHEEL_PANEL_W = 19.0;
 const SIDE_PANEL_W = 13.0;
 const PAD = 1.1;
 const ROW_H = 2.6;
+/** Height of a two-line status row. Every panel uses the same one. */
+const STATUS_ROW_H = 3.4;
 const DEG = Math.PI / 180;
 
 /**
@@ -425,6 +434,14 @@ export class WheelStudioUI extends BaseScriptComponent {
       const piece = this.shelfPieces[i];
       slot.pot.setPiece(piece);
       slot.label.text = trimName(piece.name);
+      // Centre whatever is actually on the shelf. The slots are built on a
+      // fixed six-wide grid, so leaving them where they were built makes one or
+      // two pots hug the left edge with a void beside them - which reads as a
+      // broken panel rather than a nearly-empty one.
+      const pitch = WHEEL_INNER_W / SHELF_SLOTS;
+      const x = (i - (n - 1) / 2) * pitch;
+      const pos = slot.root.getTransform().getLocalPosition();
+      slot.root.getTransform().setLocalPosition(new vec3(x, pos.y, pos.z));
     }
     if (this.shelfEmptyText) this.shelfEmptyText.enabled = n === 0;
     // The note belongs to the newest piece; it is the one the user just made.
@@ -540,7 +557,7 @@ export class WheelStudioUI extends BaseScriptComponent {
     this.header(content, this.glazeTitle, ICON_GLAZE, SIDE_INNER_W);
 
     // State chip
-    this.flexChild(content, {w: SIDE_INNER_W, h: 1.9}, (row) => {
+    this.flexChild(content, {w: SIDE_INNER_W, h: ROW_H * 0.8}, (row) => {
       this.glazeStateText = this.rowText(row, "WET", "Callout", SIDE_INNER_W,
         this.textSecondary, HorizontalAlignment.Left);
     });
@@ -552,9 +569,9 @@ export class WheelStudioUI extends BaseScriptComponent {
     });
 
     // Status line
-    this.flexChild(content, {w: SIDE_INNER_W, h: 1.9}, (row) => {
+    this.flexChild(content, {w: SIDE_INNER_W, h: STATUS_ROW_H}, (row) => {
       this.glazeStatusText = this.rowText(row, "Hold the mic and describe a glaze",
-        "Caption", SIDE_INNER_W, this.textSecondary, HorizontalAlignment.Left);
+        "Caption", SIDE_INNER_W, this.textSecondary, HorizontalAlignment.Left, 2);
     });
 
     // Hold-to-talk. Element exposes onTriggerDown/onTriggerUp for hold; the
@@ -612,16 +629,18 @@ export class WheelStudioUI extends BaseScriptComponent {
 
     this.header(content, this.kilnTitle, ICON_KILN, SIDE_INNER_W);
 
-    this.flexChild(content, {w: SIDE_INNER_W, h: 1.9}, (row) => {
+    this.flexChild(content, {w: SIDE_INNER_W, h: ROW_H * 0.8}, (row) => {
       this.kilnStateText = this.rowText(row, "COLD", "Callout", SIDE_INNER_W,
         this.textSecondary, HorizontalAlignment.Left);
     });
 
     // The firing readout carries the seed, so a result the user liked can be
     // reproduced later - the seed IS the recipe.
-    this.flexChild(content, {w: SIDE_INNER_W, h: 2.2}, (row) => {
+    // Two lines, because the reveal line carries a 10-digit seed plus four
+    // deltas and will not fit on one at any weight worth reading.
+    this.flexChild(content, {w: SIDE_INNER_W, h: STATUS_ROW_H}, (row) => {
       this.kilnStatusText = this.rowText(row, "Ready to fire", "Caption",
-        SIDE_INNER_W, this.textPrimary, HorizontalAlignment.Left);
+        SIDE_INNER_W, this.textPrimary, HorizontalAlignment.Left, 2);
     });
 
     this.flexChild(content, {w: SIDE_INNER_W, h: 3.0}, (rowObj) => {
@@ -667,16 +686,21 @@ export class WheelStudioUI extends BaseScriptComponent {
 
     const content = this.obj(root, "Content", new vec3(0, 0, PANEL_CONTENT_Z_LIFT));
     const topY = panelH / 2 - PAD;
+    // One band for the pots, shared by the empty state so the two never
+    // disagree about where the middle of the panel is.
+    const rowCentreY = topY - ROW_H * 1.15 - SHELF_SLOT_H / 2;
 
     this.freeText(content, this.shelfTitle, "Subheadline", this.textPrimary,
       new vec3(0, topY - ROW_H * 0.55, 0), WHEEL_INNER_W, HorizontalAlignment.Center);
 
-    // Empty state. Overlays the row area; hidden as soon as a piece exists.
+    // Empty state sits in the CENTRE of the row area it replaces, not at its
+    // top edge. Anchoring it to the same band the pots occupy is what stops it
+    // reading as a stranded line with a hole underneath.
     this.shelfEmptyText = this.freeText(content, "Nothing fired yet", "Caption",
-      this.textSecondary, new vec3(0, topY - ROW_H * 1.15 - SHELF_SLOT_H / 2, 0),
+      this.textSecondary, new vec3(0, rowCentreY, 0),
       WHEEL_INNER_W, HorizontalAlignment.Center);
 
-    const rowY = topY - ROW_H * 1.15 - SHELF_SLOT_H / 2;
+    const rowY = rowCentreY;
     const pitch = WHEEL_INNER_W / SHELF_SLOTS;
     for (let i = 0; i < SHELF_SLOTS; i++) {
       const x = (i - (SHELF_SLOTS - 1) / 2) * pitch;
@@ -914,9 +938,9 @@ export class WheelStudioUI extends BaseScriptComponent {
       });
     });
 
-    this.flexChild(content, {w: WHEEL_INNER_W, h: 1.9}, (row) => {
+    this.flexChild(content, {w: WHEEL_INNER_W, h: STATUS_ROW_H}, (row) => {
       this.voiceStatusText = this.rowText(row, "Hold and hum to throw a shape",
-        "Caption", WHEEL_INNER_W, this.textSecondary, HorizontalAlignment.Center);
+        "Caption", WHEEL_INNER_W, this.textSecondary, HorizontalAlignment.Center, 2);
     });
   }
 
@@ -1019,8 +1043,15 @@ export class WheelStudioUI extends BaseScriptComponent {
     so.createComponent(FlexItem.getTypeName());
   }
 
+  /**
+   * Status and label rows. WRAPS rather than overflows: this helper carries
+   * every runtime string in the studio, including the kiln's seed line, and a
+   * string long enough to leave the plate is a certainty rather than an edge
+   * case. `lines` sets how much vertical room the wrap has - the caller must
+   * give the flex row at least as much height or the second line is clipped.
+   */
   private rowText(parent: SceneObject, text: string, role: TextRole, widthCM: number,
-      color: vec4, align: HorizontalAlignment): Text {
+      color: vec4, align: HorizontalAlignment, lines: number = 1): Text {
     const so = this.obj(parent, "RowText");
     const t = so.createComponent("Component.Text") as Text;
     t.text = text;
@@ -1030,9 +1061,10 @@ export class WheelStudioUI extends BaseScriptComponent {
     t.textFill.color = color;
     t.horizontalAlignment = align;
     t.verticalAlignment = VerticalAlignment.Center;
-    t.horizontalOverflow = HorizontalOverflow.Overflow;
+    t.horizontalOverflow = HorizontalOverflow.Wrap;
     t.verticalOverflow = VerticalOverflow.Overflow;
-    t.layoutRect = Rect.create(-widthCM / 2, widthCM / 2, -1.2, 1.2);
+    const half = 1.2 * lines;
+    t.layoutRect = Rect.create(-widthCM / 2, widthCM / 2, -half, half);
     so.createComponent(FlexItem.getTypeName());
     return t;
   }
