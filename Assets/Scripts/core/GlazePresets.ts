@@ -61,7 +61,7 @@ export const GLAZE_PRESETS: GlazePreset[] = [
     params: {
       // NOT black. Floored to a warm stone grey-brown so it survives the
       // waveguide; the darkness reads through hue and contrast, not luminance.
-      baseColorBottom: [0.40, 0.34, 0.30, 1.0],
+      baseColorBottom: [0.44, 0.38, 0.32, 1.0],
       baseColorTop: [0.72, 0.52, 0.30, 1.0],
       roughness: 0.22,
       metallic: 0.35,

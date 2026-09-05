@@ -30,6 +30,18 @@ import {
 import type {GlazeResult} from "./core/GlazeSchema";
 import type {GlazeParams} from "./core/GlazePresets";
 
+/**
+ * ASR reports a status code. A code is not a sentence, and the panel is the
+ * one place the wearer can read - so each code becomes something they can act
+ * on, with the code left for the Logger.
+ */
+function micMessage(code: any): string {
+  const c = String(code);
+  if (c.indexOf("NoInternet") >= 0) return "No connection — pick a glaze by hand.";
+  if (c.indexOf("Unauthenticated") >= 0) return "Voice sign-in expired — pick a glaze by hand.";
+  return "The microphone isn't available — pick a glaze by hand.";
+}
+
 @component
 export class GlazeBenchVoice extends BaseScriptComponent {
   @ui.label("Glaze Bench — voice to glaze")
@@ -137,7 +149,7 @@ export class GlazeBenchVoice extends BaseScriptComponent {
     opts.onTranscriptionErrorEvent.add((code: AsrModule.AsrStatusCode) => {
       print("[Glaze] ASR error code=" + code);
       this.isListening = false;
-      this.ui.setGlazeStatus("Mic unavailable (" + code + "). Use the typed field.");
+      this.ui.setGlazeStatus(micMessage(code));
     });
 
     try {

@@ -17,6 +17,7 @@
  */
 
 import {KilnStation} from "./KilnStation";
+import {WheelStudioUI} from "./WheelStudioUI";
 import {Interactable} from "SpectaclesInteractionKit.lspkg/Components/Interaction/Interactable/Interactable";
 
 /** A hit steeper than this is a wall or ceiling, not something to stand a pot on. */
@@ -33,6 +34,11 @@ export class PotPlacement extends BaseScriptComponent {
   @ui.separator
   @input @hint("The pot to place.") pot: SceneObject;
   @input @allowUndefined @hint("Only a fired piece can be placed.") kiln: KilnStation;
+
+  @input
+  @allowUndefined
+  @hint("Panel to report placement on. Without it the outcome only reaches the Logger.")
+  ui: WheelStudioUI;
 
   @input
   @allowUndefined
@@ -152,6 +158,7 @@ export class PotPlacement extends BaseScriptComponent {
   place(): void {
     if (this.kiln && !this.kiln.isFired()) {
       print("[Place] piece is not fired yet - not placing.");
+      this.say("Fire it first — wet clay can't be set down.");
       return;
     }
     const tr = this.pot.getTransform();
@@ -179,6 +186,7 @@ export class PotPlacement extends BaseScriptComponent {
         return;
       }
       this.snapUpright(result.position);
+      this.say("Set down on the surface below.");
       print("[Place] placed on real surface at " + result.position +
             " (" + tiltDeg.toFixed(1) + " deg off level)");
     });
@@ -204,11 +212,19 @@ export class PotPlacement extends BaseScriptComponent {
     this.placed = true;
   }
 
+  /** One short sentence on the panel. Never the reason string - that is log detail. */
+  private say(message: string): void {
+    if (this.ui) this.ui.setKilnStatus(message);
+  }
+
   private placeFallback(reason: string): void {
     // 70cm ahead of the user at 75cm off the assumed floor.
     const y = this.assumedFloorY + FALLBACK_HEIGHT_CM;
     const pos = new vec3(0, y, -FALLBACK_FORWARD_CM);
     this.snapUpright(pos);
+    // The user gets the outcome, not the diagnosis: "no surface within 3m" is
+    // true but means nothing to someone holding a pot.
+    this.say("No surface found — set it down in front of you.");
     print("[Place] FALLBACK USED (" + reason + ") - placed 70cm ahead at 75cm height. " +
           "This is expected in Lens Studio Preview, which streams no depth.");
   }

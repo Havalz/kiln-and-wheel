@@ -1229,6 +1229,7 @@
     "":
       pot: !<reference.SceneObject> 543b00ba-49cd-40af-b327-dd7951b5dd01
       kiln: !<MappingBased.AssignableType_1> 89a877f5-36c6-4385-953c-ef99b401ed73
+      ui: !<MappingBased.AssignableType_2> 5b27344a-921b-4525-8c99-b91594e5d513
       spin: !<reference.ScriptComponent> 11b72f50-6da7-4a25-9541-875bbcaa31c3
       grabHeight: !<float> 22.000000
       grabRadius: !<float> 7.000000
@@ -1846,6 +1847,30 @@
       runOnTap: false
       enableLogging: false
       enableLoggingLifecycle: false
+  ScriptTypes:
+    "":
+      {}
+- !<ScriptComponent/561adf6c-379b-46fe-8ed7-5e0405c2b94a>
+  PrefabRemaps:
+    []
+  Name: FirstRunHints
+  Enabled: true
+  ScriptAsset: !<reference> d1f1f5c7-056b-4940-973e-c4849bb7dccd
+  ScriptInputsDefault:
+    offset: true
+    hintColor: true
+    replayHintsNow: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      mesher: !<MappingBased.AssignableType_1> 44f286cc-431d-410b-a0dd-f0929b2b8d25
+      kiln: !<MappingBased.AssignableType_2> 89a877f5-36c6-4385-953c-ef99b401ed73
+      placement: !<MappingBased.AssignableType_3> 2c87b86f-7acd-4da1-97a4-4ace69817baa
+      glazeMaterial: !<reference.Material> 8a668dbb-7360-4308-a812-748072cd4d41
+      offset: !<Vec3> {x: 0.000000, y: 30.000000, z: 0.000000}
+      hintColor: !<Vec4> {x: 1.000000, y: 0.980000, z: 0.920000, w: 1.000000}
+      replayHintsNow: false
   ScriptTypes:
     "":
       {}
@@ -3139,6 +3164,7 @@
     []
   Components:
     - !<own> e284dc2e-0973-4158-aa30-4bcfbade51c8
+    - !<own> 561adf6c-379b-46fe-8ed7-5e0405c2b94a
 - !<SceneObject/8fe2a532-9bf3-4cde-b598-04ce5470718d>
   PrefabRemaps:
     []

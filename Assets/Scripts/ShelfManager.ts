@@ -105,6 +105,7 @@ export class ShelfManager extends BaseScriptComponent {
     } catch (e) {
       // A read failure must not stop the studio opening; start with an empty shelf.
       print("[Shelf] load failed, starting empty: " + e);
+      this.say("Couldn't read the shelf — starting empty.");
       return [];
     }
   }
@@ -114,7 +115,13 @@ export class ShelfManager extends BaseScriptComponent {
       global.persistentStorageSystem.store.putString(STORAGE_KEY, serializeShelf(this.shelf));
     } catch (e) {
       print("[Shelf] save failed: " + e);
+      this.say("Couldn't save that piece.");
     }
+  }
+
+  /** One short sentence under the shelf. Never the exception text. */
+  private say(message: string): void {
+    if (this.ui) this.ui.setShelfNote(message);
   }
 
   // ── Public ────────────────────────────────────────────────────────────────

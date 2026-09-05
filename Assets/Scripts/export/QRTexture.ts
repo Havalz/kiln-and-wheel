@@ -137,6 +137,7 @@ export class QRTexture extends BaseScriptComponent {
   @ui.group_end
 
   private qrTexture: Texture = null;
+  private noteText: Text = null;
   private materialsCloned = false;
   private warned: {[key: string]: boolean} = {};
 
@@ -267,6 +268,23 @@ export class QRTexture extends BaseScriptComponent {
     // The URL in text is the fallback that must survive anything going wrong
     // with the code above, so it is a sibling of the plate rather than a child
     // of it - hiding the QR must never hide the text.
+    const noteObj = global.scene.createSceneObject("QRNote");
+    noteObj.setParent(root);
+    noteObj.getTransform().setLocalPosition(new vec3(0, -7.2, 0.1));
+    const nt = noteObj.createComponent("Component.Text") as Text;
+    const nf = shareFont();
+    if (nf) nt.font = nf;
+    nt.text = "";
+    nt.size = 24;
+    nt.depthTest = true;
+    nt.textFill.color = new vec4(1, 1, 1, 1);
+    nt.horizontalAlignment = HorizontalAlignment.Center;
+    nt.verticalAlignment = VerticalAlignment.Center;
+    nt.horizontalOverflow = HorizontalOverflow.Wrap;
+    nt.verticalOverflow = VerticalOverflow.Overflow;
+    nt.layoutRect = Rect.create(-7, 7, -1.2, 1.2);
+    this.noteText = nt;
+
     const textObj = global.scene.createSceneObject("QRUrl");
     textObj.setParent(root);
     textObj.getTransform().setLocalPosition(new vec3(0, -8.2, 0.1));
@@ -298,6 +316,7 @@ export class QRTexture extends BaseScriptComponent {
     } catch (e) {
       this.setQrVisible(false);
       print("[QR] generation failed, showing the text URL only: " + e);
+      this.setNote("Code unavailable — use the link below.");
       return;
     }
 
@@ -318,6 +337,8 @@ export class QRTexture extends BaseScriptComponent {
       this.qrTexture = texture;
       const applied = this.applyTexture(texture);
       this.setQrVisible(applied);
+      // A recovered render must not keep an old warning on screen.
+      this.setNote(applied ? "" : "Code unavailable — use the link below.");
       if (applied) {
         print(
           "[QR] rendered " +
@@ -332,10 +353,16 @@ export class QRTexture extends BaseScriptComponent {
     } catch (e) {
       this.setQrVisible(false);
       print("[QR] render failed, showing the text URL only: " + e);
+      this.setNote("Code unavailable — use the link below.");
     }
   }
 
   /** Hide the QR panel. The URL text is left alone - it is the fallback. */
+  /** One short sentence above the URL, cleared when the code renders. */
+  private setNote(message: string): void {
+    if (this.noteText) this.noteText.text = message;
+  }
+
   hide(): void {
     this.setQrVisible(false);
   }

@@ -1,0 +1,66 @@
+- !<AssetImportMetadata/f1cd12fc-508f-438d-948f-ca681dc3dc97>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> d1f1f5c7-056b-4940-973e-c4849bb7dccd
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> d1f1f5c7-056b-4940-973e-c4849bb7dccd
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> 96bef208-d697-495b-8413-21a3309e2d37
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/96bef208-d697-495b-8413-21a3309e2d37>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 7e5bca9c-fbac-4713-b56e-a1da0e806950
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    glazeMaterial: false
+    hintColor: false
+    kiln: false
+    mesher: false
+    offset: false
+    placement: false
+    replayHintsNow: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - mesher: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      kiln: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      placement: !<MappingBased.AssignableType_3> 00000000-0000-0000-0000-000000000000
+      glazeMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      offset: !<Vec3> {x: 0.000000, y: 30.000000, z: 0.000000}
+      hintColor: !<Vec4> {x: 1.000000, y: 0.980000, z: 0.920000, w: 1.000000}
+      replayHintsNow: false
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"First-run guidance — retires after one full cycle"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @input AssignableType_1 mesher {"hint":"Supplies the profile the shaping step watches."}'
+    - '// @input AssignableType_2 kiln {"hint":"Supplies isFired() for the firing step."}'
+    - '// @input AssignableType_3 placement {"hint":"Supplies hasPlaced() for the final step."}'
+    - '// @input Asset.Material glazeMaterial {"hint":"GlazeMat, watched for the glaze step."}'
+    - '// @input vec3 offset = {0,30,0} {"hint":"Where the line sits relative to the wheel, in cm."}'
+    - '// @input vec4 hintColor = {1,0.98,0.92,1} {"hint":"Near-white. On the waveguide the hint must ADD light to be read.", "widget":"color"}'
+    - '// @input bool replayHintsNow {"hint":"Tick to show the hints again, as if this were a first run. Auto-clears."}'

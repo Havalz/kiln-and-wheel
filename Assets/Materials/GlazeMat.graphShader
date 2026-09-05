@@ -535,7 +535,7 @@ Nodes:
             // WAVEGUIDE FLOOR. Black is TRANSPARENT on this display, so no glaze may ever
             // reach true black or it stops existing. Every channel is lifted to a bright
             // desaturated warm grey; a "black" tenmoku reads as dark warm stone, not a hole.
-            const vec3 GLAZE_FLOOR = vec3(0.34, 0.30, 0.26);
+            const vec3 GLAZE_FLOOR = vec3(0.40, 0.35, 0.30);
 
             // Crystal blooms are near-white with a warm bias: they are where the melt
             // crystallised and catches light, so they must out-luminate the glaze under them.

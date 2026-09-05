@@ -389,6 +389,11 @@ export class WheelStudioUI extends BaseScriptComponent {
     }
   }
 
+  /** One line under the shelf row. Used for critique and for storage trouble. */
+  setShelfNote(msg: string): void {
+    if (this.shelfNoteText) this.shelfNoteText.text = msg;
+  }
+
   /** One line of voice-throw feedback under the wheel controls. */
   /**
    * The wheel panel's single status line. Voice throwing and UNDO both write
