@@ -9,11 +9,20 @@
  * MAX_TILT_DEG of world up - a pot does not sit on a wall, and WorldQuery will
  * happily return wall and ceiling hits if you do not filter them.
  *
- * THE FALLBACK IS THE DEMO PATH. WorldQuery is depth-backed and returns null
- * whenever the ray leaves the camera's view - and Lens Studio Preview streams no
- * depth at all, so in the simulator EVERY cast misses. The fallback placement is
- * therefore not an edge case; it is what a recorded demo will actually show, and
- * it is logged loudly so nobody mistakes it for a real surface hit.
+ * CAST INSIDE THE VIEWED REGION. WorldQuery samples a depth map that only
+ * covers what the camera can see, and returns null for any ray outside the
+ * field of view. An earlier version cast straight DOWN from the pot - a three
+ * metre vertical segment that leaves the frustum almost immediately - and so
+ * never got a single hit. It is not that Preview lacks depth: the docs list
+ * Interactive Preview as a supported environment, and EXPERIMENTAL_API is
+ * needed only for semantic classification, which this does not use. The ray was
+ * simply pointed where there is no data.
+ *
+ * The gesture stays a DROP, not a point-and-place: you pinch the pot and let
+ * go. So the probe runs from near the eye out and DOWNWARD into the view, and
+ * sweeps its angle across successive frames rather than betting everything on
+ * one sample - a single out-of-view frame should not commit the piece to the
+ * fallback forever.
  */
 
 import {KilnStation} from "./KilnStation";
@@ -22,11 +31,27 @@ import {Interactable} from "SpectaclesInteractionKit.lspkg/Components/Interactio
 
 /** A hit steeper than this is a wall or ceiling, not something to stand a pot on. */
 const MAX_TILT_DEG = 25;
-/** Ignore surfaces further than this. */
+/** Longest probe the sweep can produce, for the fallback message only. */
 const MAX_RANGE_CM = 300;
 /** Fallback pose when nothing is found: 70cm ahead, 75cm off the floor. */
 const FALLBACK_FORWARD_CM = 70;
 const FALLBACK_HEIGHT_CM = 75;
+
+/** Frames the probe gets before giving up. ~0.4s at 30fps. */
+const PROBE_ATTEMPTS = 12;
+/** Start the ray slightly ahead of the eye rather than inside the head. */
+const PROBE_NEAR_CM = 15;
+/** How far forward the probe reaches for a surface. */
+const PROBE_FORWARD_CM = 85;
+/**
+ * Downward sweep, in cm below the view axis at PROBE_FORWARD_CM. The span is
+ * deliberately shallow: 20cm at 85cm forward is ~13 degrees below the axis and
+ * 95cm is ~48, so the sweep stays inside a plausible FOV at the near end and
+ * only risks leaving it at the far end. Sweeping is what turns the retry budget
+ * into coverage instead of twelve identical misses.
+ */
+const PROBE_DROP_MIN_CM = 20;
+const PROBE_DROP_MAX_CM = 95;
 
 @component
 export class PotPlacement extends BaseScriptComponent {
@@ -39,6 +64,11 @@ export class PotPlacement extends BaseScriptComponent {
   @allowUndefined
   @hint("Panel to report placement on. Without it the outcome only reaches the Logger.")
   ui: WheelStudioUI;
+
+  @input
+  @allowUndefined
+  @hint("The camera the probe casts from. Depth only exists where this looks; without it placement falls back immediately.")
+  camera: SceneObject;
 
   @input
   @allowUndefined
@@ -64,10 +94,14 @@ export class PotPlacement extends BaseScriptComponent {
   private session: any = null;
   private placed = false;
   private grab: Interactable = null;
+  private probesLeft = 0;
+  private probing = false;
+  private awaitingCallback = false;
 
   onAwake(): void {
     // Session creation belongs in OnStartEvent, not onAwake.
     this.createEvent("OnStartEvent").bind(() => this.onStart());
+    this.createEvent("UpdateEvent").bind(() => this.onUpdate());
   }
 
   private onStart(): void {
@@ -161,34 +195,74 @@ export class PotPlacement extends BaseScriptComponent {
       this.say("Fire it first — wet clay can't be set down.");
       return;
     }
-    const tr = this.pot.getTransform();
-    const from = tr.getWorldPosition();
-    // Cast from slightly above the pot straight down, MAX_RANGE_CM deep.
-    const rayStart = new vec3(from.x, from.y + 20, from.z);
-    const rayEnd = new vec3(from.x, from.y - MAX_RANGE_CM, from.z);
-
     if (!this.session) {
       this.placeFallback("no hit-test session");
       return;
     }
+    if (!this.camera) {
+      this.placeFallback("no camera assigned");
+      return;
+    }
+    // Hand off to onUpdate: the probe needs frames, because one sample from one
+    // angle is exactly the mistake that made this never work.
+    this.probesLeft = PROBE_ATTEMPTS;
+    this.probing = true;
+    this.awaitingCallback = false;
+    this.say("Looking for a surface…");
+  }
 
-    this.session.hitTest(rayStart, rayEnd, (result: any) => {
-      if (!result) {
-        // Null means the ray left the camera's view or there is no depth.
-        this.placeFallback("no surface within " + (MAX_RANGE_CM / 100) + "m");
-        return;
-      }
+  private onUpdate(): void {
+    if (!this.probing || this.awaitingCallback) return;
+    if (this.probesLeft <= 0) {
+      this.probing = false;
+      this.placeFallback("no surface found in view after " + PROBE_ATTEMPTS + " probes");
+      return;
+    }
+    this.probesLeft--;
+    this.probeOnce();
+  }
+
+  /**
+   * One ray, from just ahead of the eye to a point forward and below it. The
+   * drop sweeps from shallow to steep across attempts, so successive frames
+   * cover a fan of angles through the viewed region instead of re-asking the
+   * same question.
+   */
+  private probeOnce(): void {
+    const tr = this.camera.getTransform();
+    const eye = tr.getWorldPosition();
+    const rot = tr.getWorldRotation();
+    // A camera with identity rotation looks down world -Z.
+    const view = rot.multiplyVec3(new vec3(0, 0, -1)).normalize();
+
+    const done = PROBE_ATTEMPTS - this.probesLeft - 1;
+    const t = PROBE_ATTEMPTS > 1 ? done / (PROBE_ATTEMPTS - 1) : 0;
+    const drop = PROBE_DROP_MIN_CM + (PROBE_DROP_MAX_CM - PROBE_DROP_MIN_CM) * t;
+
+    const start = eye.add(view.uniformScale(PROBE_NEAR_CM));
+    const end = eye
+      .add(view.uniformScale(PROBE_FORWARD_CM))
+      .add(new vec3(0, -drop, 0));
+
+    this.awaitingCallback = true;
+    this.session.hitTest(start, end, (result: any) => {
+      this.awaitingCallback = false;
+      if (!this.probing) return;
+      if (!result) return;   // out of view or nothing there - the next frame tries a new angle
+
       const n = result.normal.normalize();
       const tiltCos = Math.abs(n.dot(vec3.up()));
       const tiltDeg = Math.acos(Math.min(1, tiltCos)) * 180 / Math.PI;
       if (tiltDeg > MAX_TILT_DEG) {
-        this.placeFallback("nearest surface was vertical (" + tiltDeg.toFixed(0) + " deg off level)");
+        // A wall or the ceiling. Keep sweeping rather than standing a pot on it.
         return;
       }
+      this.probing = false;
       this.snapUpright(result.position);
       this.say("Set down on the surface below.");
-      print("[Place] placed on real surface at " + result.position +
-            " (" + tiltDeg.toFixed(1) + " deg off level)");
+      print("[Place] HIT on real surface at " + result.position +
+            " (" + tiltDeg.toFixed(1) + " deg off level, drop " +
+            drop.toFixed(0) + "cm, probe " + (done + 1) + "/" + PROBE_ATTEMPTS + ")");
     });
   }
 
@@ -226,6 +300,8 @@ export class PotPlacement extends BaseScriptComponent {
     // true but means nothing to someone holding a pot.
     this.say("No surface found — set it down in front of you.");
     print("[Place] FALLBACK USED (" + reason + ") - placed 70cm ahead at 75cm height. " +
-          "This is expected in Lens Studio Preview, which streams no depth.");
+          "Preview IS a supported environment for WorldQuery, so this is not " +
+          "proof that placement is broken - it means no surface answered along " +
+          "the swept probe here. Untested on device.");
   }
 }

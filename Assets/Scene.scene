@@ -1230,6 +1230,7 @@
       pot: !<reference.SceneObject> 543b00ba-49cd-40af-b327-dd7951b5dd01
       kiln: !<MappingBased.AssignableType_1> 89a877f5-36c6-4385-953c-ef99b401ed73
       ui: !<MappingBased.AssignableType_2> 5b27344a-921b-4525-8c99-b91594e5d513
+      camera: !<reference.SceneObject> 00000000-0000-0065-0000-000000000064
       spin: !<reference.ScriptComponent> 11b72f50-6da7-4a25-9541-875bbcaa31c3
       grabHeight: !<float> 22.000000
       grabRadius: !<float> 7.000000

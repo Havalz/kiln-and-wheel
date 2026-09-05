@@ -29,6 +29,7 @@
   PackagePolicy: CanBeUnpacked
   ScriptInputsHidden:
     assumedFloorY: false
+    camera: false
     grabHeight: false
     grabRadius: false
     kiln: false
@@ -47,6 +48,7 @@
     - pot: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       kiln: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
       ui: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      camera: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       spin: !<reference.ScriptComponent> 00000000-0000-0000-0000-000000000000
       grabHeight: !<float> 22.000000
       grabRadius: !<float> 7.000000
@@ -60,6 +62,7 @@
     - '// @input SceneObject pot {"hint":"The pot to place."}'
     - '// @input AssignableType_1 kiln {"hint":"Only a fired piece can be placed."}'
     - '// @input AssignableType_2 ui {"hint":"Panel to report placement on. Without it the outcome only reaches the Logger."}'
+    - '// @input SceneObject camera {"hint":"The camera the probe casts from. Depth only exists where this looks; without it placement falls back immediately."}'
     - "// @input Component.ScriptComponent spin {\"hint\":\"The wheel's Spin. Stopped on placement — a pot standing on a table does not turn.\"}"
     - '// @ui {"widget":"group_start", "label":"Grab volume"}'
     - '// @input float grabHeight = 22 {"hint":"Height of the pot in cm. The grab capsule is built to match it."}'
