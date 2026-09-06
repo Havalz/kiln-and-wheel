@@ -34,6 +34,8 @@
     grabRadius: false
     kiln: false
     pot: false
+    runDepthProbeNow: false
+    runPhysicsProbeNow: false
     spin: false
     ui: false
   ScriptTypesHidden:
@@ -48,6 +50,8 @@
     - pot: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       kiln: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
       ui: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      runDepthProbeNow: false
+      runPhysicsProbeNow: false
       camera: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       spin: !<reference.ScriptComponent> 00000000-0000-0000-0000-000000000000
       grabHeight: !<float> 22.000000
@@ -62,6 +66,8 @@
     - '// @input SceneObject pot {"hint":"The pot to place."}'
     - '// @input AssignableType_1 kiln {"hint":"Only a fired piece can be placed."}'
     - '// @input AssignableType_2 ui {"hint":"Panel to report placement on. Without it the outcome only reaches the Logger."}'
+    - '// @input bool runDepthProbeNow {"hint":"TEMPORARY diagnostic: cast short raw rays and log every result unfiltered."}'
+    - '// @input bool runPhysicsProbeNow {"hint":"TEMPORARY diagnostic: Physics.Probe raycast grid against scene COLLIDERS, not depth."}'
     - '// @input SceneObject camera {"hint":"The camera the probe casts from. Depth only exists where this looks; without it placement falls back immediately."}'
     - "// @input Component.ScriptComponent spin {\"hint\":\"The wheel's Spin. Stopped on placement — a pot standing on a table does not turn.\"}"
     - '// @ui {"widget":"group_start", "label":"Grab volume"}'

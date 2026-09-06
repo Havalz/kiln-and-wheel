@@ -6,7 +6,7 @@
 //
 // jsDelivr sends CORS headers, so those responses are cacheable and readable
 // rather than opaque.
-const CACHE = 'wheel-v1';
+const CACHE = 'kiln-v1';
 
 self.addEventListener('activate', (e) => {
   // Drop older caches so a bumped CACHE name actually ships new code.

@@ -12,7 +12,7 @@
     - !<own> 79f9c389-214d-4f21-ba19-2fc226b10de2
     - !<own> 8f6b0bf2-ee3e-48bc-b2ce-3b791437f8ad
     - !<own> cdb3ee20-47ff-4e88-8d07-dcb2ec0ddba9
-    - !<own> f7715c51-1ef2-401c-8df3-baf50ec63d45
+    - !<own> 1edae5b1-c732-4a41-bcba-d06e4a86e516
   layers: !<Layers/267ee9a7-aff2-4f9d-9a49-f71214747d03>
     userLayers:
       - id: 1
@@ -620,9 +620,8 @@
   Enabled: true
   ScriptAsset: !<reference> 2bbdc870-6f7c-4861-b4c6-0feba2e6a68c
   ScriptInputsDefault:
-    handleRadius: true
-    hoverScale: true
-    handleOffset: true
+    runHandleDiagnosticsNow: true
+    dragSensitivity: true
     debugLog: true
   ScriptTypesDefault:
     {}
@@ -630,9 +629,11 @@
     "":
       handleMesh: !<reference.RenderMesh> ca980abc-e333-4618-bf33-63220663c652
       handleMaterial: !<reference.Material> 4041f84e-0d54-45a8-a260-6060f45cff56
-      handleRadius: 0.900000
-      hoverScale: 1.550000
-      handleOffset: 1.800000
+      runHandleDiagnosticsNow: false
+      dragSensitivity: 0.500000
+      handleRadius: 1.150000
+      hoverScale: 1.900000
+      handleOffset: 4.200000
       debugLog: false
   ScriptTypes:
     "":
@@ -698,6 +699,22 @@
     - !<own> 8c2db655-ea37-4414-819b-757762052631
   Components:
     []
+- !<ScriptComponent/1073d022-3530-42ce-974f-7a7b94ab9978>
+  PrefabRemaps:
+    []
+  Name: MessagingBridge
+  Enabled: true
+  ScriptAsset: !<reference> 9aa407db-2872-4afc-a162-cf7faf2a0f29
+  ScriptInputsDefault:
+    {}
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      {}
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/10f60da2-2196-40ad-9e72-8a6bc7e86f35>
   PrefabRemaps:
     []
@@ -944,10 +961,11 @@
   ScriptInputsDefault:
     barColor: true
     barOffset: true
-    barSize: true
+    progressColor: true
     editorEnvelope: true
     runVoiceThrowNow: true
     runVoiceRecordNow: true
+    holdPreviewNow: true
   ScriptTypesDefault:
     {}
   ScriptInputs:
@@ -957,8 +975,9 @@
       microphone: !<reference.AudioTrackAsset> 87c6a30d-46b3-4939-8d46-3aa20667f2c2
       barColor: !<Vec4> {x: 0.300000, y: 1.000000, z: 0.720000, w: 1.000000}
       barOffset: !<Vec3> {x: 14.000000, y: 0.000000, z: 0.000000}
-      barSize: !<Vec2> {x: 1.400000, y: 24.000000}
+      barSize: !<Vec2> {x: 14.000000, y: 24.000000}
       barMaterial: !<reference.Material> 3db00254-2d2e-4e3e-9a58-099058dfe992
+      progressColor: !<Vec4> {x: 1.000000, y: 0.780000, z: 0.220000, w: 1.000000}
       editorEnvelope: !<float[]>
         - 0.150000
         - 0.450000
@@ -970,9 +989,25 @@
         - 0.250000
       runVoiceThrowNow: false
       runVoiceRecordNow: false
+      holdPreviewNow: false
   ScriptTypes:
     "":
       {}
+- !<SceneObject/1edae5b1-c732-4a41-bcba-d06e4a86e516>
+  PrefabRemaps:
+    []
+  Name: LEAF Plugin Bridge
+  Enabled: true
+  Layers: 1
+  LocalTransform: !<TransformEntity>
+    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+    HasSegmentScaleCompensation: false
+  Children:
+    []
+  Components:
+    - !<own> 1073d022-3530-42ce-974f-7a7b94ab9978
 - !<RenderMeshVisual/1f969daa-5809-4500-b314-98d91ccba131>
   PrefabRemaps:
     []
@@ -1230,6 +1265,8 @@
       pot: !<reference.SceneObject> 543b00ba-49cd-40af-b327-dd7951b5dd01
       kiln: !<MappingBased.AssignableType_1> 89a877f5-36c6-4385-953c-ef99b401ed73
       ui: !<MappingBased.AssignableType_2> 5b27344a-921b-4525-8c99-b91594e5d513
+      runDepthProbeNow: true
+      runPhysicsProbeNow: true
       camera: !<reference.SceneObject> 00000000-0000-0065-0000-000000000064
       spin: !<reference.ScriptComponent> 11b72f50-6da7-4a25-9541-875bbcaa31c3
       grabHeight: !<float> 22.000000
@@ -1758,6 +1795,28 @@
     - !<own> 8363e9a6-cd83-4889-abd4-6521e394f244
   Components:
     []
+- !<ScriptComponent/53530d5f-eee1-4623-b964-e6bb11d3d29b>
+  PrefabRemaps:
+    []
+  Name: KilnHeatRings
+  Enabled: true
+  ScriptAsset: !<reference> b0a2c6be-af2d-4266-b5fb-7cc6a120a031
+  ScriptInputsDefault:
+    emberColor: true
+    hotColor: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      mesher: !<MappingBased.AssignableType_1> 44f286cc-431d-410b-a0dd-f0929b2b8d25
+      kiln: !<MappingBased.AssignableType_2> 89a877f5-36c6-4385-953c-ef99b401ed73
+      camera: !<reference.SceneObject> 00000000-0000-0065-0000-000000000064
+      spriteMaterial: !<reference.Material> 3f0a7486-6351-495f-b72b-3adf561fc737
+      emberColor: !<Vec4> {x: 1.000000, y: 0.300000, z: 0.040000, w: 1.000000}
+      hotColor: !<Vec4> {x: 1.000000, y: 0.860000, z: 0.550000, w: 1.000000}
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/53784674-ec58-4bc3-b515-e4307d2c1356>
   PrefabRemaps:
     []
@@ -1810,7 +1869,7 @@
   Enabled: true
   Layers: 1
   LocalTransform: !<TransformEntity>
-    Position: {x: 0.000000, y: -30.000000, z: -45.000000}
+    Position: {x: 0.000000, y: -23.600000, z: -45.000000}
     Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
     Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
     HasSegmentScaleCompensation: false
@@ -1935,6 +1994,7 @@
     glazeTitle: true
     kilnTitle: true
     shelfTitle: true
+    wheelNearFieldCm: true
   ScriptTypesDefault:
     {}
   ScriptInputs:
@@ -1963,6 +2023,7 @@
       glazeTitle: THE GLAZE BENCH
       kilnTitle: THE KILN
       shelfTitle: THE SHELF
+      wheelNearFieldCm: !<float> 5.000000
   ScriptTypes:
     "":
       {}
@@ -2783,7 +2844,7 @@
   PrefabRemaps:
     []
   Name: KilnEmbers
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -3166,6 +3227,7 @@
   Components:
     - !<own> e284dc2e-0973-4158-aa30-4bcfbade51c8
     - !<own> 561adf6c-379b-46fe-8ed7-5e0405c2b94a
+    - !<own> 53530d5f-eee1-4623-b964-e6bb11d3d29b
 - !<SceneObject/8fe2a532-9bf3-4cde-b598-04ce5470718d>
   PrefabRemaps:
     []
@@ -3188,8 +3250,11 @@
   Enabled: true
   ScriptAsset: !<reference> 73736021-9381-4b3c-87ce-8635bdeba966
   ScriptInputsDefault:
-    typedGlaze: true
     runTypedGlaze: true
+    micColor: true
+    ringColor: true
+    micSensitivity: true
+    holdPulseNow: true
     geminiModel: true
     timeoutSeconds: true
     transitionSeconds: true
@@ -3199,8 +3264,15 @@
     "":
       ui: !<MappingBased.AssignableType_1> 5b27344a-921b-4525-8c99-b91594e5d513
       glazeMaterial: !<reference.Material> 8a668dbb-7360-4308-a812-748072cd4d41
-      typedGlaze: a dark iron tenmoku that breaks rust at the rim
+      typedGlaze: a dark tenmoku black brown iron glaze
       runTypedGlaze: false
+      microphone: !<reference.AudioTrackAsset> 87c6a30d-46b3-4939-8d46-3aa20667f2c2
+      pulseMaterial: !<reference.Material> 3f0a7486-6351-495f-b72b-3adf561fc737
+      micColor: !<Vec4> {x: 0.420000, y: 1.000000, z: 0.860000, w: 1.000000}
+      ringColor: !<Vec4> {x: 0.300000, y: 0.860000, z: 1.000000, w: 1.000000}
+      micSensitivity: !<float> 12.000000
+      holdPulseNow: false
+      holdBeat: !<float> 3.000000
       geminiModel: gemini-2.5-flash
       timeoutSeconds: !<float> 20.000000
       transitionSeconds: 1.200000
@@ -3767,22 +3839,6 @@
     CapitalizationOverride: None
   DepthTest: false
   TwoSided: false
-- !<ScriptComponent/a5ccb3f9-1adc-4765-9a93-e20c7f51930f>
-  PrefabRemaps:
-    []
-  Name: MessagingBridge
-  Enabled: true
-  ScriptAsset: !<reference> 9aa407db-2872-4afc-a162-cf7faf2a0f29
-  ScriptInputsDefault:
-    {}
-  ScriptTypesDefault:
-    {}
-  ScriptInputs:
-    "":
-      {}
-  ScriptTypes:
-    "":
-      {}
 - !<SceneObject/a6305e2f-5379-4729-800a-d5ecae615edc>
   PrefabRemaps:
     []
@@ -5724,21 +5780,6 @@
     - !<own> a7526b33-fca3-4f28-8e32-b0e9aa13c4b4
   Components:
     []
-- !<SceneObject/f7715c51-1ef2-401c-8df3-baf50ec63d45>
-  PrefabRemaps:
-    []
-  Name: LEAF Plugin Bridge
-  Enabled: true
-  Layers: 1
-  LocalTransform: !<TransformEntity>
-    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
-    Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
-    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
-    HasSegmentScaleCompensation: false
-  Children:
-    []
-  Components:
-    - !<own> a5ccb3f9-1adc-4765-9a93-e20c7f51930f
 - !<Text/f8b45037-4e57-43d1-b326-0aefc93dc2b5>
   PrefabRemaps:
     []

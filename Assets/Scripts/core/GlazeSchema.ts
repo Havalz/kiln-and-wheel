@@ -236,6 +236,13 @@ export const GLAZE_SYSTEM_INSTRUCTION =
   '"crackleIntensity": float 0-1. "dripAmount": float 0-1.\n' +
   '"rimTint": [r,g,b,a] floats 0-1. "glossBands": float 0-1.\n' +
   '"firedGlow": float, always 0.\n' +
+  "The input is a live speech transcript. On-device ASR auto-detects language " +
+  "and has no locale setting, so English speech is sometimes returned as " +
+  "phonetically similar words in another language (\"golden\" came back as " +
+  "Turkish \"Golden'\u0131 bilek\"). Read the transcript phonetically as an " +
+  "English description of a ceramic glaze and answer for the colour and finish " +
+  "it most plausibly describes. Never refuse and never ask for clarification: " +
+  "if it is unintelligible, return a plausible glaze anyway.\n" +
   "CRITICAL DISPLAY CONSTRAINT: this renders on a transparent waveguide where " +
   "black is invisible. Never return any colour channel below 0.30. A black or " +
   "very dark glaze must be expressed as a bright desaturated warm grey-brown, " +

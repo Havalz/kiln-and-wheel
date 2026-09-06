@@ -1,0 +1,63 @@
+- !<AssetImportMetadata/1eac3b3a-86e9-49f0-a7da-dbf2b1b0308e>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> b0a2c6be-af2d-4266-b5fb-7cc6a120a031
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> b0a2c6be-af2d-4266-b5fb-7cc6a120a031
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> aa3ee462-26d1-4d07-9ef2-5d1b0d2a09cb
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/aa3ee462-26d1-4d07-9ef2-5d1b0d2a09cb>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  VersionPrerelease: ""
+  UpdateOrder: 0
+  ComponentUid: 27f68e5a-58a4-4728-959e-870671b8a317
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    camera: false
+    emberColor: false
+    hotColor: false
+    kiln: false
+    mesher: false
+    spriteMaterial: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - mesher: !<MappingBased.AssignableType_1> 00000000-0000-0000-0000-000000000000
+      kiln: !<MappingBased.AssignableType_2> 00000000-0000-0000-0000-000000000000
+      camera: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
+      spriteMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      emberColor: !<Vec4> {x: 1.000000, y: 0.300000, z: 0.040000, w: 1.000000}
+      hotColor: !<Vec4> {x: 1.000000, y: 0.860000, z: 0.550000, w: 1.000000}
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @ui {"widget":"label", "label":"Heat rings — the firing, shown as fire climbing the form"}'
+    - '// @ui {"widget":"separator"}'
+    - '// @input AssignableType_1 mesher {"hint":"Supplies the silhouette the rings hug, plus height and radius scale."}'
+    - '// @input AssignableType_2 kiln {"hint":"Supplies the one shared heat curve."}'
+    - '// @input SceneObject camera {"hint":"Billboards face this. Wire the same Camera Object the placement probe uses."}'
+    - '// @input Asset.Material spriteMaterial {"hint":"Unlit ADDITIVE material with ENABLE_BASE_TEX on. Without it the swarm is built but never drawn."}'
+    - '// @input vec4 emberColor = {1,0.3,0.04,1} {"hint":"Colour of the dimmest embers.", "widget":"color"}'
+    - '// @input vec4 hotColor = {1,0.86,0.55,1} {"hint":"Colour at peak brightness. Hotter reads whiter, so this runs to yellow-white.", "widget":"color"}'

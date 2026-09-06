@@ -37,6 +37,7 @@ import {Slider} from "SpectaclesUIKit.lspkg/Scripts/Components/Slider/Slider";
 import {GradientParameters, RoundedRectangle} from "SpectaclesUIKit.lspkg/Scripts/Visuals/RoundedRectangle/RoundedRectangle";
 import {RoundedRectangleVisual} from "SpectaclesUIKit.lspkg/Scripts/Visuals/RoundedRectangle/RoundedRectangleVisual";
 import Event, {PublicApi} from "SpectaclesInteractionKit.lspkg/Utils/Event";
+import {InteractionPlane} from "SpectaclesInteractionKit.lspkg/Components/Interaction/InteractionPlane/InteractionPlane";
 import {ShelfPot} from "./core/ShelfPot";
 import type {ShelfPiece} from "./core/ShelfStore";
 
@@ -323,6 +324,60 @@ export class WheelStudioUI extends BaseScriptComponent {
   private countValueText: Text = null;
   private glazeTranscriptText: Text = null;
   private glazeStatusText: Text = null;
+  @input
+  @hint("Depth of the wheel panel's near-field grab slab, in cm. UIKit defaults to 17, which reaches well past the plate and steals pinches aimed at the profile handles floating in front of it. Just past the button faces is enough.")
+  @widget(new SliderWidget(2, 17, 0.5))
+  wheelNearFieldCm: number = 5;
+
+  private glazeMicAnchor: SceneObject = null;
+  private panelRoots: SceneObject[] = [];
+
+  /**
+   * Where the live mic pulse mounts. The UI owns panel geometry, so it hands
+   * out the seat rather than letting the voice script guess at panel-local
+   * coordinates that move whenever PANEL_SCALE or the layout changes.
+   */
+  getGlazeMicAnchor(): SceneObject { return this.glazeMicAnchor; }
+
+  /**
+   * The four station plates, for anything that has to keep clear of them.
+   * Handing out the roots rather than cached boxes means a caller always reads
+   * the panels where they actually are, including PANEL_SCALE and pitch.
+   */
+  getPanelRoots(): SceneObject[] {
+    const out: SceneObject[] = [];
+    for (let i = 0; i < this.panelRoots.length; i++) {
+      if (this.panelRoots[i]) out.push(this.panelRoots[i]);
+    }
+    return out;
+  }
+
+  /**
+   * Pull in the wheel plate's near-field grab slab so it stops capturing the
+   * profile handles floating in front of it.
+   *
+   * RETRIED, NOT CALLED ONCE AT BUILD TIME. UIKit's BackPlate creates its
+   * InteractionPlane during its own OnStart, which runs after this panel is
+   * assembled - reaching for the component while building found nothing and the
+   * fix silently did not apply. This keeps asking for a few frames.
+   */
+  private tightenNearField(root: SceneObject, depthCm: number, triesLeft: number): void {
+    const plane = root.getComponent(InteractionPlane.getTypeName()) as InteractionPlane;
+    if (plane) {
+      plane.nearFieldDepth = depthCm;
+      print("[UI] " + root.name + " near-field depth set to " + depthCm + "cm.");
+      return;
+    }
+    if (triesLeft <= 0) {
+      print("[UI] no InteractionPlane on " + root.name +
+            " after retries - near field left at default " +
+            "(handles in front of the plate may not take a pinch).");
+      return;
+    }
+    const retry = this.createEvent("DelayedCallbackEvent");
+    retry.bind(() => this.tightenNearField(root, depthCm, triesLeft - 1));
+    retry.reset(0.1);
+  }
   private glazeStateText: Text = null;
   private kilnStateText: Text = null;
   private kilnStatusText: Text = null;
@@ -343,6 +398,11 @@ export class WheelStudioUI extends BaseScriptComponent {
     this.sceneObject.createComponent("Component.Canvas");
     this.createEvent("OnStartEvent").bind(() => {
       this.buildStations();
+      // Only the wheel plate has 3D content floating in front of it, so only it
+      // needs the slab pulled in; the other three keep UIKit's default.
+      if (this.panelRoots.length > 0) {
+        this.tightenNearField(this.panelRoots[0], this.wheelNearFieldCm, 12);
+      }
     });
   }
 
@@ -488,7 +548,14 @@ export class WheelStudioUI extends BaseScriptComponent {
       quat.angleAxis(this.wheelPanelPitchDeg * DEG, vec3.right()));
     wheelRoot.getTransform().setLocalScale(
       new vec3(PANEL_SCALE, PANEL_SCALE, PANEL_SCALE));
+    this.panelRoots.push(wheelRoot);
     this.buildWheelPanel(wheelRoot);
+    // A BackPlate ships a 17cm near-field interaction slab standing off its
+    // face. That volume is invisible and reached 16cm above the plate's top
+    // edge, swallowing any profile handle inside it: the interactor switched to
+    // near-field targeting on the PANEL and the handle never saw the pinch.
+    // The plate keeps its position and size; only the grab volume is pulled in
+    // to just past the button faces, which is all the panel itself needs.
 
     // Right / left stations on the arc, each yawed to face the user at origin.
     const rx = Math.sin(spread) * d;
@@ -499,6 +566,7 @@ export class WheelStudioUI extends BaseScriptComponent {
     glazeRoot.getTransform().setLocalRotation(quat.angleAxis(-spread, vec3.up()));
     glazeRoot.getTransform().setLocalScale(
       new vec3(PANEL_SCALE, PANEL_SCALE, PANEL_SCALE));
+    this.panelRoots.push(glazeRoot);
     this.buildGlazeBench(glazeRoot);
 
     // The shelf sits above the wheel, tilted down: finished work lives overhead,
@@ -509,6 +577,7 @@ export class WheelStudioUI extends BaseScriptComponent {
       quat.angleAxis(-14 * DEG, vec3.right()));
     shelfRoot.getTransform().setLocalScale(
       new vec3(PANEL_SCALE, PANEL_SCALE, PANEL_SCALE));
+    this.panelRoots.push(shelfRoot);
     this.buildShelf(shelfRoot);
 
     const kilnRoot = this.obj(this.sceneObject, "Station_Kiln",
@@ -516,6 +585,7 @@ export class WheelStudioUI extends BaseScriptComponent {
     kilnRoot.getTransform().setLocalRotation(quat.angleAxis(spread, vec3.up()));
     kilnRoot.getTransform().setLocalScale(
       new vec3(PANEL_SCALE, PANEL_SCALE, PANEL_SCALE));
+    this.panelRoots.push(kilnRoot);
     this.buildKiln(kilnRoot);
   }
 
@@ -630,6 +700,8 @@ export class WheelStudioUI extends BaseScriptComponent {
         t.horizontalOverflow = HorizontalOverflow.Overflow;
         t.verticalOverflow = VerticalOverflow.Overflow;
         t.layoutRect = Rect.create(-4.45, 4.45, -1.2, 1.2);
+        this.glazeMicAnchor = this.obj(btnObj, "MicPulseAnchor",
+          new vec3(-6.6, 0, BUTTON_LABEL_Z));
         btn.onTriggerDown.add(() => this._onGlazeMicDown.invoke());
         btn.onTriggerUp.add(() => this._onGlazeMicUp.invoke());
       });

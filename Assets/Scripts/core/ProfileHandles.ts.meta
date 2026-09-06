@@ -29,11 +29,13 @@
   PackagePolicy: CanBeUnpacked
   ScriptInputsHidden:
     debugLog: false
+    dragSensitivity: false
     handleMaterial: false
     handleMesh: false
     handleOffset: false
     handleRadius: false
     hoverScale: false
+    runHandleDiagnosticsNow: false
   ScriptTypesHidden:
     {}
   ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
@@ -45,6 +47,8 @@
   DefaultScriptInputs:
     - handleMesh: !<reference.RenderMesh> 00000000-0000-0000-0000-000000000000
       handleMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      runHandleDiagnosticsNow: false
+      dragSensitivity: 0.500000
       handleRadius: 0.900000
       hoverScale: 1.550000
       handleOffset: 1.800000
@@ -55,7 +59,9 @@
   InputLines:
     - '// @input Asset.RenderMesh handleMesh {"hint":"Sphere mesh shared by all 8 handles."}'
     - '// @input Asset.Material handleMaterial {"hint":"Bright unlit material. Cloned per handle so hover only lights one."}'
-    - '// @input float handleRadius = 0.9 {"hint":"Handle sphere radius in centimetres."}'
-    - '// @input float hoverScale = 1.55 {"hint":"Scale multiplier applied while a handle is hovered."}'
-    - '// @input float handleOffset = 1.8 {"hint":"Centimetres to float each handle outward past the surface, so it is grabbable instead of half-buried in the mesh."}'
+    - "// @input bool runHandleDiagnosticsNow {\"hint\":\"TEMPORARY: dump every handle's state and ray-test what occludes it. Auto-clears.\"}"
+    - '// @input float dragSensitivity = 0.5 {"hint":"Hand travel to profile change. 1.0 is literal 1:1 - a centimetre of hand is a centimetre of radius - which proved too twitchy to dial in a subtle curve. Half of that still tracks the hand directly without flinging the profile across its whole range.", "widget":"slider", "min":0.15, "max":1.5, "step":0.05}'
+    - '// @input float handleRadius = 1.15 {"hint":"Handle sphere radius in centimetres."}'
+    - '// @input float hoverScale = 1.9 {"hint":"Scale multiplier applied while a handle is hovered."}'
+    - '// @input float handleOffset = 4.2 {"hint":"Centimetres to float each handle outward past the surface, so it is grabbable instead of half-buried in the mesh."}'
     - '// @input bool debugLog {"hint":"Print hover/grab events to the Logger panel. For manual pinch testing in the simulator; leave off in normal use."}'

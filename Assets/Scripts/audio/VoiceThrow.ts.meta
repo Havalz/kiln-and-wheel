@@ -33,8 +33,10 @@
     barOffset: false
     barSize: false
     editorEnvelope: false
+    holdPreviewNow: false
     mesher: false
     microphone: false
+    progressColor: false
     runVoiceRecordNow: false
     runVoiceThrowNow: false
     ui: false
@@ -54,6 +56,7 @@
       barOffset: !<Vec3> {x: 14.000000, y: 0.000000, z: 0.000000}
       barSize: !<Vec2> {x: 1.400000, y: 24.000000}
       barMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      progressColor: !<Vec4> {x: 1.000000, y: 0.780000, z: 0.220000, w: 1.000000}
       editorEnvelope: !<float[]>
         - 0.150000
         - 0.450000
@@ -65,6 +68,7 @@
         - 0.250000
       runVoiceThrowNow: false
       runVoiceRecordNow: false
+      holdPreviewNow: false
   ScriptTypes:
     -
       {}
@@ -79,9 +83,11 @@
     - '// @input vec3 barOffset = {14,0,0} {"hint":"Where the bar sits relative to the wheel, in cm."}'
     - '// @input vec2 barSize = {1.4,24} {"hint":"Bar size in cm: x is width, y is full-scale height."}'
     - '// @input Asset.Material barMaterial {"hint":"Unlit material for the bar. Without one the bar is skipped rather than drawn untextured."}'
+    - '// @input vec4 progressColor = {1,0.78,0.22,1} {"hint":"Fill colour of the 4-second progress track. Bright: it has to add light on the waveguide.", "widget":"color"}'
     - '// @ui {"widget":"group_end"}'
     - '// @ui {"widget":"group_start", "label":"Editor trigger (no microphone in Preview)"}'
     - '// @input float[] editorEnvelope = {0.15,0.45,0.9,0.75,0.4,0.55,0.85,0.25} {"hint":"Eight raw loudness values. Fed through the IDENTICAL pipeline the microphone uses."}'
     - '// @input bool runVoiceThrowNow {"hint":"Tick to throw a pot from editorEnvelope. Auto-clears."}'
     - '// @input bool runVoiceRecordNow {"hint":"Tick to start a real recording without the button — the way to exercise the microphone and the no-mic abort in the simulator. Auto-clears."}'
+    - '// @input bool holdPreviewNow {"hint":"Hold the live silhouette on screen, drawn from editorEnvelope, so it can be inspected or captured without racing the 4s take. Recording clears it."}'
     - '// @ui {"widget":"group_end"}'

@@ -65,7 +65,7 @@
   InputLines:
     - '// @ui {"widget":"label", "label":"Share QR — shown at the Kiln after firing"}'
     - '// @ui {"widget":"separator"}'
-    - '// @input string githubUser {"hint":"GitHub user in https://<user>.github.io/wheel-specs/#v1.<payload>"}'
+    - '// @input string githubUser {"hint":"GitHub user in https://<user>.github.io/kiln-and-wheel/#v1.<payload>"}'
     - '// @ui {"widget":"group_start", "label":"Display"}'
     - '// @input Component.Image qrImage {"hint":"Image component that shows the QR texture. Wire this OR qrMesh; both is fine."}'
     - '// @input Component.RenderMeshVisual qrMesh {"hint":"RenderMeshVisual alternative to qrImage, for a quad in world space."}'

@@ -23,7 +23,7 @@ export const DEFAULT_GITHUB_USER = "your-github-user";
  * site, because the '#v1.' prefix is what tells the viewer page which codec
  * version follows, and a mismatch there is a silently broken link.
  */
-export const SHARE_URL_TEMPLATE = "https://{user}.github.io/wheel-specs/#v1.{payload}";
+export const SHARE_URL_TEMPLATE = "https://{user}.github.io/kiln-and-wheel/#v1.{payload}";
 
 /** Quiet zone in modules. Four is the spec minimum; below it, scanners fail. */
 export const QUIET_ZONE_MODULES = 4;
@@ -76,7 +76,7 @@ export class QRTexture extends BaseScriptComponent {
   @ui.label("Share QR — shown at the Kiln after firing")
   @ui.separator
   @input
-  @hint("GitHub user in https://<user>.github.io/wheel-specs/#v1.<payload>")
+  @hint("GitHub user in https://<user>.github.io/kiln-and-wheel/#v1.<payload>")
   githubUser: string = DEFAULT_GITHUB_USER;
 
   @ui.group_start("Display")

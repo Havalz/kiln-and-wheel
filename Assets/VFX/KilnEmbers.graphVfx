@@ -323,7 +323,7 @@ Nodes:
       NodeType: 1
       Ports:
         AttractRepelStrength:
-          Variable: 38.0
+          Variable: 5.0
         AttractRepelTarget:
           Variable: [0.0, 70.0, 0.0]
         Code:
@@ -510,6 +510,15 @@ Nodes:
             input_float Density;
             input_float Area;
             
+            input_float OrbitSpeed;
+            input_float OrbitJitter;
+            input_float OrbitResponse;
+            input_float ColumnBaseRadius;
+            input_float ColumnTopRadius;
+            input_float ColumnHeight;
+            input_float RadialResponse;
+            input_float Buoyancy;
+            
             float attackDecay(float controlValue, float attackTime, float decayTime) {
             	float rise = clamp(controlValue / attackTime, 0.0, 1.0);
             	float fall = clamp((1.0 - controlValue) / decayTime, 0.0, 1.0);
@@ -536,6 +545,46 @@ Nodes:
             	dragForce = clamp(dragForce, -limit, limit);
             
             	system.setParticleForce(system.getParticleForce() + dragForce);
+            
+            	// ---- Orbit: heat drawn up a column, not a fountain -------------
+            	// The particle is steered rather than pushed: a force alone keeps
+            	// accelerating and the sheet tears apart, so both the tangential
+            	// and radial terms drive velocity TOWARD a target and stop there.
+            	vec3 pos = system.getParticlePosition();
+            	vec2 radial = vec2(pos.x, pos.z);
+            	float r = length(radial);
+            	if (r < 0.01) { radial = vec2(0.01, 0.0); r = 0.01; }
+            	vec2 rdir = radial / r;
+            	vec2 tdir = vec2(-rdir.y, rdir.x);
+            
+            	// Height up the column, 0 at the foot, 1 at the rim.
+            	float h = clamp(pos.y / max(ColumnHeight, 0.001), 0.0, 1.0);
+            
+            	// Stable for the particle's whole life: useTime is FALSE, so each
+            	// ember keeps its own angular speed and the sheet never reads as
+            	// one rigid carousel.
+            	float spin = mix(1.0 - OrbitJitter, 1.0 + OrbitJitter,
+            	                 system.getParticleRandomFloat(true, true, false, 0.0));
+            
+            	// Angular speed rises as the column narrows - the same reason a
+            	// skater spins faster with arms drawn in.
+            	float wantTangential = OrbitSpeed * spin * mix(1.0, 1.7, h);
+            	float haveTangential = dot(vec2(vel.x, vel.z), tdir);
+            	vec3 steerT = vec3(tdir.x, 0.0, tdir.y)
+            	            * ((wantTangential - haveTangential) * OrbitResponse);
+            
+            	// Hold the sheet on the pot's surface, tightening with height.
+            	float targetR = mix(ColumnBaseRadius, ColumnTopRadius, h);
+            	float haveRadial = dot(vec2(vel.x, vel.z), rdir);
+            	float wantRadial = (targetR - r) * RadialResponse;
+            	vec3 steerR = vec3(rdir.x, 0.0, rdir.y)
+            	            * ((wantRadial - haveRadial) * OrbitResponse);
+            
+            	// Lift lives here rather than in the spawn attractor, so vertical
+            	// and horizontal motion can be tuned without fighting each other.
+            	vec3 lift = vec3(0.0, Buoyancy, 0.0);
+            
+            	system.setParticleForce(system.getParticleForce() + steerT + steerR + lift);
             }
 
         CustomCodeNodeAsset:
@@ -548,6 +597,22 @@ Nodes:
           String: ""
         DragCoefficient:
           Variable: 0.14
+        OrbitSpeed:
+          Variable: 26.0
+        OrbitJitter:
+          Variable: 0.35
+        OrbitResponse:
+          Variable: 3.0
+        ColumnBaseRadius:
+          Variable: 8.0
+        ColumnTopRadius:
+          Variable: 3.0
+        ColumnHeight:
+          Variable: 26.0
+        RadialResponse:
+          Variable: 2.5
+        Buoyancy:
+          Variable: 26.0
         Examples:
           ItemIndex: 0
           ItemList: "Custom : System Built-In Values/Functions"

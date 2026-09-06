@@ -29,6 +29,22 @@ import type {GlazeParams} from "./core/GlazePresets";
 const PHASE_HEAT_END = 2.0;
 const PHASE_PEAK_END = 4.0;
 const PHASE_TOTAL = 6.0;
+/**
+ * Ceiling on the pot's own incandescence. Held at 1 the glaze washes to near
+ * white, and additive light has nowhere left to go - the heat rings laid over
+ * it simply vanished. Capping it keeps the pot a saturated ember and leaves the
+ * top of the range for the rings, which are what the eye is meant to follow.
+ */
+const GLOW_PEAK = 0.32;
+/**
+ * How far the glaze is dragged toward ember colour at peak heat. Clay in a kiln
+ * goes deep red, not white - and a near-white pot leaves additive fire nowhere
+ * to go, so the heat rings simply vanished against it. Darkening the vessel is
+ * what makes the fire legible; the reveal animation restores the real glaze.
+ */
+const KILN_DARKEN = 0.88;
+const EMBER_BOTTOM: [number, number, number, number] = [0.30, 0.07, 0.02, 1];
+const EMBER_TOP: [number, number, number, number] = [0.54, 0.17, 0.04, 1];
 
 @component
 export class KilnStation extends BaseScriptComponent {
@@ -57,6 +73,15 @@ export class KilnStation extends BaseScriptComponent {
   @input @allowUndefined @hint("Sparse dry pops during heat and peak.") emberCrackleTrack: AudioTrackAsset;
   @input @allowUndefined @hint("Metallic contraction ticks during cooling.") coolingTickTrack: AudioTrackAsset;
   @input @allowUndefined @hint("Warm ceramic ping at the reveal.") revealChimeTrack: AudioTrackAsset;
+
+  @input
+  @hint("Hold the firing curve at holdHeat so the effect can be inspected or captured without racing the 6s sequence.")
+  holdHeatNow: boolean = false;
+
+  @input
+  @hint("Heat value to hold, 0-1. Around 0.9 is the peak of the firing.")
+  @widget(new SliderWidget(0, 1, 0.05))
+  holdHeat: number = 0.9;
   @ui.group_end
 
   private _onFired = new Event<FiringResult>();
@@ -71,6 +96,7 @@ export class KilnStation extends BaseScriptComponent {
   private fired = false;
   private elapsed = 0;
   private preFire: GlazeParams = null;
+  private holding = false;
 
   private roar: AudioComponent = null;
   private embers: AudioComponent = null;
@@ -122,6 +148,55 @@ export class KilnStation extends BaseScriptComponent {
   }
 
   /**
+   * THE ONE CURVE. Normalised firing intensity, 0 when cold, 1 at the peak of
+   * the hold. Every channel of the moment - ring spawn rate and brightness,
+   * base bloom, the pot's glow, its tremble, and the audio level - reads this
+   * and nothing keeps its own private clock. That is the whole reason it
+   * exists: last time the particles ran on a boolean and the roar on its own
+   * play(), so they drifted two seconds apart and the moment broke.
+   */
+  /**
+   * CAPTURE AID. The firing is six seconds long and the editor's panel grab is
+   * slower than that, so every attempt to photograph the effect landed after
+   * the reveal. Holding the curve at a fixed value stops the clock without
+   * faking anything: the rings, the pot's glow and its ember darkening all read
+   * the same getHeat() they always do. Auto-clears when switched off.
+   */
+  getHeat(): number {
+    if (this.holdHeatNow) {
+      const v = this.holdHeat;
+      return v < 0 ? 0 : v > 1 ? 1 : v;
+    }
+    if (!this.firing) return 0;
+    const t = this.elapsed;
+    if (t < PHASE_HEAT_END) {
+      // Ease in rather than ramp linearly; a linear rise reads mechanical.
+      const k = t / PHASE_HEAT_END;
+      return k * k * (3 - 2 * k);
+    }
+    if (t < PHASE_PEAK_END) {
+      // Hold, but breathing - fire surges and lulls rather than sitting flat.
+      const k = (t - PHASE_HEAT_END) / (PHASE_PEAK_END - PHASE_HEAT_END);
+      return 0.86 + 0.14 * Math.sin(k * Math.PI * 5.0);
+    }
+    if (t < PHASE_TOTAL) {
+      const k = (t - PHASE_PEAK_END) / (PHASE_TOTAL - PHASE_PEAK_END);
+      return 1 - k * k;   // falls away slowly at first, then drops
+    }
+    return 0;
+  }
+
+  /** Seconds since the firing began; 0 when not firing. */
+  getElapsed(): number {
+    return this.firing ? this.elapsed : 0;
+  }
+
+  /** Total length of the sequence, so followers need not re-declare it. */
+  getDuration(): number {
+    return PHASE_TOTAL;
+  }
+
+  /**
    * Commit the piece. Called by the FIRE button, and the entry point for
    * releasing the pot into the kiln volume.
    */
@@ -152,6 +227,24 @@ export class KilnStation extends BaseScriptComponent {
   // ── Sequence ──────────────────────────────────────────────────────────────
 
   private onUpdate(): void {
+    if (this.holdHeatNow) {
+      if (!this.holding) {
+        this.holding = true;
+        if (!this.preFire) this.preFire = this.readMaterial();
+        print("[Kiln] heat HELD at " + this.holdHeat.toFixed(2) +
+              " - clear holdHeatNow to release.");
+      }
+      const h = this.getHeat();
+      this.setGlow(h * GLOW_PEAK);
+      this.darkenForHeat(h);
+      return;
+    }
+    if (this.holding) {
+      this.holding = false;
+      this.setGlow(0);
+      if (this.preFire) this.writeMaterial(this.preFire, this.preFire, 1);
+    }
+
     if (this.runFireNow) {
       this.runFireNow = false;
       this.fire();
@@ -160,23 +253,21 @@ export class KilnStation extends BaseScriptComponent {
     this.elapsed += getDeltaTime();
     const t = this.elapsed;
 
-    if (t < PHASE_HEAT_END) {
-      // Heat: glow ramps in.
-      this.setGlow(t / PHASE_HEAT_END);
-    } else if (t < PHASE_PEAK_END) {
-      // Peak: held at full, pot barely readable through the heat.
-      this.setGlow(1);
-    } else if (t < PHASE_TOTAL) {
-      // Cooling.
-      const k = (t - PHASE_PEAK_END) / (PHASE_TOTAL - PHASE_PEAK_END);
-      this.setGlow(1 - k);
-      if (!this.playedTicks) {
-        this.playedTicks = true;
-        this.setEmbers(false);
-        if (this.ticks) this.ticks.play(1);
-      }
-    } else {
+    // ONE CURVE. The glow is getHeat() and nothing else, so the pot breathes on
+    // exactly the beat the rings do instead of running a second private clock.
+    const heat = this.getHeat();
+    this.setGlow(heat * GLOW_PEAK);
+    this.darkenForHeat(heat);
+
+    if (t >= PHASE_TOTAL) {
       this.reveal();
+      return;
+    }
+    // Cooling ticks, once, as the curve turns over.
+    if (t >= PHASE_PEAK_END && !this.playedTicks) {
+      this.playedTicks = true;
+      this.setEmbers(false);
+      if (this.ticks) this.ticks.play(1);
     }
   }
 
@@ -236,6 +327,14 @@ export class KilnStation extends BaseScriptComponent {
   }
 
   // ── Material ──────────────────────────────────────────────────────────────
+
+  /** Drag the glaze toward ember as the heat curve rises. Same curve, no clock. */
+  private darkenForHeat(heat: number): void {
+    const p = this.glazeMaterial.mainPass as any;
+    const k = heat * KILN_DARKEN;
+    p.baseColorBottom = this.lerpColor(this.preFire.baseColorBottom, EMBER_BOTTOM, k);
+    p.baseColorTop = this.lerpColor(this.preFire.baseColorTop, EMBER_TOP, k);
+  }
 
   private setGlow(v: number): void {
     (this.glazeMaterial.mainPass as any).firedGlow = v < 0 ? 0 : v > 1 ? 1 : v;

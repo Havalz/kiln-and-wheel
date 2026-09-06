@@ -19,11 +19,9 @@
 import {LatheMesher} from "../core/LatheMesher";
 import {WheelStudioUI} from "../WheelStudioUI";
 import {
-  MIN_RADIUS,
-  VOICE_POINTS,
-  frameRms,
-  voiceHeights,
-  voiceToRadii
+  VOICE_POINTS, MIN_RADIUS, MAX_RADIUS, frameRms, voiceToRadii, voiceHeights,
+  normalizeEnvelope, smoothEnvelope, resampleEnvelope, envelopeToRadii,
+  smoothWindowFor, clamp
 } from "../core/VoiceEnvelope";
 
 /** Hard ceiling on a take. */
@@ -39,6 +37,14 @@ const MIC_TIMEOUT_S = 1.0;
 const FRAME_CAPACITY = 2048;
 /** Safety cap on the per-update drain loop. */
 const MAX_FRAMES_PER_UPDATE = 64;
+
+/**
+ * Rows in the live silhouette ribbon. Enough that the curve reads as a curve
+ * rather than a staircase, cheap enough to rewrite every frame.
+ */
+const SIL_ROWS = 48;
+/** Slim progress track beside the silhouette, in cm. */
+const PROGRESS_W_CM = 0.9;
 
 @component
 export class VoiceThrow extends BaseScriptComponent {
@@ -68,6 +74,10 @@ export class VoiceThrow extends BaseScriptComponent {
   @allowUndefined
   @hint("Unlit material for the bar. Without one the bar is skipped rather than drawn untextured.")
   barMaterial: Material;
+  @input
+  @hint("Fill colour of the 4-second progress track. Bright: it has to add light on the waveguide.")
+  @widget(new ColorWidget())
+  progressColor: vec4 = new vec4(1.0, 0.78, 0.22, 1.0);
   @ui.group_end
 
   @ui.group_start("Editor trigger (no microphone in Preview)")
@@ -82,6 +92,9 @@ export class VoiceThrow extends BaseScriptComponent {
   @input
   @hint("Tick to start a real recording without the button — the way to exercise the microphone and the no-mic abort in the simulator. Auto-clears.")
   runVoiceRecordNow: boolean = false;
+  @input
+  @hint("Hold the live silhouette on screen, drawn from editorEnvelope, so it can be inspected or captured without racing the 4s take. Recording clears it.")
+  holdPreviewNow: boolean = false;
   @ui.group_end
 
   private provider: any = null;
@@ -97,9 +110,17 @@ export class VoiceThrow extends BaseScriptComponent {
   private fromRadii: number[] = [];
   private toRadii: number[] = [];
 
-  private barRoot: SceneObject = null;
-  private barTransform: Transform = null;
+  private previewRoot: SceneObject = null;
+  private silRoot: SceneObject = null;
+  private silBuilder: MeshBuilder = null;
+  private silMat: Material = null;
+  private silTransform: Transform = null;
+  private progRoot: SceneObject = null;
+  private progTransform: Transform = null;
+  private progMat: Material = null;
   private level = 0;
+  private holding = false;
+  private readonly silVtx: number[] = [0, 0, 0, 0, 0, 1, 0, 0];
 
   onAwake(): void {
     this.createEvent("OnStartEvent").bind(() => this.onStart());
@@ -111,7 +132,7 @@ export class VoiceThrow extends BaseScriptComponent {
       print("[Voice] no mesher assigned - voice throwing is inert.");
       return;
     }
-    this.buildBar();
+    this.buildSilhouette();
 
     if (this.microphone) {
       // The provider is the microphone; the asset is just its container.
@@ -143,7 +164,7 @@ export class VoiceThrow extends BaseScriptComponent {
         print("[Voice] microphone start failed: " + e);
       }
     }
-    this.setBarVisible(true);
+    this.setPreviewVisible(true);
     this.status("Listening…");
     print("[Voice] recording started");
   }
@@ -155,10 +176,10 @@ export class VoiceThrow extends BaseScriptComponent {
   private finishRecording(reason: string): void {
     if (!this.recording) return;
     this.recording = false;
-    this.setBarVisible(false);
     this.stopProvider();
 
     if (!this.sawAudio) {
+      this.setPreviewVisible(false);
       // Abort cleanly: no shape change, no half-applied profile.
       this.status("No microphone");
       print("[Voice] ABORTED - no audio frames within " + MIC_TIMEOUT_S +
@@ -238,7 +259,7 @@ export class VoiceThrow extends BaseScriptComponent {
     if (this.recording) {
       this.recordElapsed += getDeltaTime();
       this.pumpMicrophone();
-      this.updateBar();
+      this.updatePreview();
       if (!this.sawAudio && this.recordElapsed >= MIC_TIMEOUT_S) {
         this.finishRecording("no microphone");
       } else if (this.recordElapsed >= MAX_RECORD_S) {
@@ -246,12 +267,28 @@ export class VoiceThrow extends BaseScriptComponent {
       }
     }
 
+    if (this.holdPreviewNow && !this.recording && !this.growing) {
+      if (!this.holding) {
+        this.holding = true;
+        this.setPreviewVisible(true);
+        print("[Voice] preview HELD from editorEnvelope - clear holdPreviewNow to release.");
+      }
+      const raw: number[] = [];
+      for (let i = 0; i < this.editorEnvelope.length; i++) raw.push(this.editorEnvelope[i]);
+      this.writeSilhouette(raw, 0.6, 1, 1);
+    } else if (this.holding) {
+      this.holding = false;
+      this.setPreviewVisible(false);
+    }
+
     if (this.growing) {
       this.growElapsed += getDeltaTime();
       const t = Math.min(1, this.growElapsed / GROW_S);
       this.applyGrowth(t);
+      this.updateHandoff(t);
       if (t >= 1) {
         this.growing = false;
+        this.setPreviewVisible(false);
         print("[Voice] growth complete - all 8 handles remain editable.");
       }
     }
@@ -303,60 +340,218 @@ export class VoiceThrow extends BaseScriptComponent {
     this.throwFrom(raw, "editor");
   }
 
-  // ── Level bar ─────────────────────────────────────────────────────────────
+  // ── Live silhouette ───────────────────────────────────────────────────────
 
   /**
-   * A single bright quad beside the wheel, built here rather than taken as an
-   * asset input so voice throwing needs no new art. Its vertices run y 0..1 so
-   * scaling Y grows it upward from its base instead of from its middle.
+   * THE FEEDBACK IS THE TOOL. Loudness here is not a level to be metered - it
+   * IS the pot's profile, so the preview draws the silhouette itself: a ribbon
+   * whose half-width at each row is the radius that row of the vessel will
+   * have. Humming louder pushes the curve wide, going quiet pinches it in, and
+   * the whole thing grows upward as the four seconds run out. A generic meter
+   * would have shown that the microphone works; this shows what you are making.
+   *
+   * It is computed with the SAME pipeline that shapes the final pot -
+   * normalize, smooth, resample, envelopeToRadii - so the preview cannot drift
+   * from the result. What you watch being drawn is what you get.
    */
-  private buildBar(): void {
-    const builder = new MeshBuilder([
+  private buildSilhouette(): void {
+    this.silBuilder = new MeshBuilder([
       {name: "position", components: 3},
       {name: "normal", components: 3},
       {name: "texture0", components: 2}
     ]);
-    builder.topology = MeshTopology.Triangles;
-    builder.indexType = MeshIndexType.UInt16;
-    builder.appendVerticesInterleaved([
+    this.silBuilder.topology = MeshTopology.Triangles;
+    this.silBuilder.indexType = MeshIndexType.UInt16;
+
+    const zeros: number[] = new Array(SIL_ROWS * 2 * 8);
+    for (let i = 0; i < zeros.length; i++) zeros[i] = 0;
+    this.silBuilder.appendVerticesInterleaved(zeros);
+
+    const idx: number[] = [];
+    for (let r = 0; r < SIL_ROWS - 1; r++) {
+      const a = r * 2;
+      idx.push(a, a + 1, a + 2);
+      idx.push(a + 2, a + 1, a + 3);
+    }
+    this.silBuilder.appendIndices(idx);
+
+    // NOT parented to the lathe. The wheel spins, and a preview that rotates
+    // away from the viewer mid-take is worse than none - the first build put it
+    // at local +14cm and the spin had carried it to world -14cm by the time it
+    // was looked at. Its own root at the wheel's position, identity rotation.
+    this.previewRoot = global.scene.createSceneObject("VoicePreview");
+    this.previewRoot.getTransform().setWorldPosition(
+      this.mesher.sceneObject.getTransform().getWorldPosition());
+
+    this.silRoot = global.scene.createSceneObject("VoiceSilhouette");
+    this.silRoot.setParent(this.previewRoot);
+    this.silRoot.layer = this.mesher.sceneObject.layer;
+    this.silTransform = this.silRoot.getTransform();
+    this.silTransform.setLocalPosition(this.barOffset);
+
+    const visual = this.silRoot.createComponent("Component.RenderMeshVisual") as RenderMeshVisual;
+    visual.mesh = this.silBuilder.getMesh();
+    if (this.barMaterial) {
+      this.silMat = this.barMaterial.clone();
+      (this.silMat.mainPass as any).baseColor = this.barColor;
+      visual.clearMaterials();
+      visual.addMaterial(this.silMat);
+    }
+
+    this.progRoot = this.buildQuad("VoiceProgress",
+      this.barOffset.add(new vec3(this.barSize.x * 0.5 + 1.6, 0, 0)), this.progressColor);
+    this.progTransform = this.progRoot.getTransform();
+
+    this.setPreviewVisible(false);
+  }
+
+  /** A unit quad running y 0..1, so scaling Y grows it upward from its base. */
+  private buildQuad(name: string, offset: vec3, color: vec4): SceneObject {
+    const b = new MeshBuilder([
+      {name: "position", components: 3},
+      {name: "normal", components: 3},
+      {name: "texture0", components: 2}
+    ]);
+    b.topology = MeshTopology.Triangles;
+    b.indexType = MeshIndexType.UInt16;
+    b.appendVerticesInterleaved([
       -0.5, 0, 0,  0, 0, 1,  0, 0,
        0.5, 0, 0,  0, 0, 1,  1, 0,
        0.5, 1, 0,  0, 0, 1,  1, 1,
       -0.5, 1, 0,  0, 0, 1,  0, 1
     ]);
-    builder.appendIndices([0, 1, 2, 0, 2, 3]);
-    // Commit the appended data. Without updateMesh() the mesh reports empty
-    // and the bar silently draws nothing.
-    builder.updateMesh();
+    b.appendIndices([0, 1, 2, 0, 2, 3]);
+    b.updateMesh();   // commit, or the mesh reports empty and draws nothing
 
-    this.barRoot = global.scene.createSceneObject("VoiceLevelBar");
-    this.barRoot.setParent(this.mesher.sceneObject);
-    this.barTransform = this.barRoot.getTransform();
-    this.barTransform.setLocalPosition(this.barOffset);
-
-    const visual = this.barRoot.createComponent("Component.RenderMeshVisual") as RenderMeshVisual;
-    visual.mesh = builder.getMesh();
-
-    // Cloned and tinted: on the waveguide the bar has to ADD light to read, so
-    // it carries its own bright colour rather than borrowing the pot's glaze.
+    const root = global.scene.createSceneObject(name);
+    root.setParent(this.previewRoot);
+    root.layer = this.mesher.sceneObject.layer;
+    root.getTransform().setLocalPosition(offset);
+    const v = root.createComponent("Component.RenderMeshVisual") as RenderMeshVisual;
+    v.mesh = b.getMesh();
     if (this.barMaterial) {
-      const mat = this.barMaterial.clone();
-      const pass = mat.mainPass as any;
-      pass.baseColor = this.barColor;
-      visual.clearMaterials();
-      visual.addMaterial(mat);
+      const m = this.barMaterial.clone();
+      (m.mainPass as any).baseColor = color;
+      v.clearMaterials();
+      v.addMaterial(m);
+      if (name === "VoiceProgress") this.progMat = m;
     }
-    this.setBarVisible(false);
+    return root;
   }
 
-  private updateBar(): void {
-    if (!this.barTransform) return;
-    const h = Math.max(0.02, Math.min(1, this.level)) * this.barSize.y;
-    this.barTransform.setLocalScale(new vec3(this.barSize.x, h, 1));
+  /**
+   * Map whatever has been heard so far onto the rows filled so far. `filled`
+   * tracks elapsed time, not sample count, so the curve climbs at a steady
+   * readable rate instead of lurching when the provider hands over a burst.
+   */
+  private writeSilhouette(envelope: number[], progress: number, alpha: number,
+      widthScale: number): void {
+    const filled = Math.max(2, Math.round(clamp(progress, 0, 1) * SIL_ROWS));
+    let radii: number[] = [];
+    if (envelope.length >= 2) {
+      const norm = normalizeEnvelope(envelope);
+      const sm = smoothEnvelope(norm, smoothWindowFor(norm.length));
+      // resampleEnvelope upsamples by NEAREST NEIGHBOUR on purpose - it must not
+      // invent detail for the eight control points that define the real pot.
+      // A preview is a different job: the finished vessel is a Catmull-Rom
+      // through those points, so drawing a staircase would misrepresent it.
+      // Interpolate for display only; the data path is untouched.
+      radii = envelopeToRadii(this.lerpResample(sm, filled));
+    } else {
+      for (let i = 0; i < filled; i++) radii.push(MIN_RADIUS);
+    }
+
+    const halfW = this.barSize.x * 0.5 * widthScale;
+    const topY = clamp(progress, 0, 1) * this.barSize.y;
+    const v = this.silVtx;
+    for (let i = 0; i < SIL_ROWS; i++) {
+      let y = topY;
+      let r = 0;
+      if (i < filled) {
+        y = (filled > 1 ? i / (filled - 1) : 0) * topY;
+        r = (radii[i] / MAX_RADIUS) * halfW;
+      }
+      v[1] = y; v[2] = 0; v[3] = 0; v[4] = 0; v[5] = 1; v[7] = y / this.barSize.y;
+      v[0] = -r; v[6] = 0;
+      this.silBuilder.setVertexInterleaved(i * 2, v);
+      v[0] = r; v[6] = 1;
+      this.silBuilder.setVertexInterleaved(i * 2 + 1, v);
+    }
+    if (this.silBuilder.isValid()) this.silBuilder.updateMesh();
+
+    if (this.silMat) {
+      const c = this.barColor;
+      (this.silMat.mainPass as any).baseColor =
+        new vec4(c.x * alpha, c.y * alpha, c.z * alpha, c.w * alpha);
+    }
+    if (this.progTransform) {
+      this.progTransform.setLocalScale(
+        new vec3(PROGRESS_W_CM, Math.max(0.01, clamp(progress, 0, 1)) * this.barSize.y, 1));
+    }
   }
 
-  private setBarVisible(on: boolean): void {
-    if (this.barRoot) this.barRoot.enabled = on;
+  /** Linear upsample, for the preview curve only. */
+  private lerpResample(values: number[], count: number): number[] {
+    const n = values.length;
+    const out: number[] = [];
+    if (n === 0 || count <= 0) return out;
+    if (n === 1) {
+      for (let i = 0; i < count; i++) out.push(values[0]);
+      return out;
+    }
+    for (let i = 0; i < count; i++) {
+      const u = count > 1 ? (i / (count - 1)) * (n - 1) : 0;
+      const lo = Math.floor(u);
+      const hi = Math.min(n - 1, lo + 1);
+      const f = u - lo;
+      out.push(values[lo] + (values[hi] - values[lo]) * f);
+    }
+    return out;
+  }
+
+  /**
+   * NO FAKE LIFE. Until a frame has actually arrived the curve stays flat at
+   * its minimum radius: a dead microphone and a silent one look the same to
+   * the code, but neither may look like a working one to the user.
+   */
+  private updatePreview(): void {
+    const progress = clamp(this.recordElapsed / MAX_RECORD_S, 0, 1);
+    // The curve appears only once a frame has actually arrived. A dead mic and
+    // a silent one are indistinguishable to the code, so until there is real
+    // input the only thing moving is the progress track - which is a clock, not
+    // a claim about hearing anything.
+    if (this.silRoot) this.silRoot.enabled = this.sawAudio;
+    if (!this.sawAudio) {
+      if (this.progTransform) {
+        this.progTransform.setLocalScale(
+          new vec3(PROGRESS_W_CM, Math.max(0.01, progress) * this.barSize.y, 1));
+      }
+      return;
+    }
+    this.writeSilhouette(this.envelope, progress, 1, 1);
+  }
+
+  /**
+   * THE HANDOFF. On release the drawn curve does not blink out: over the same
+   * 0.8s the clay is growing, the preview slides in toward the wheel, widens to
+   * the vessel's own scale and fades to nothing - so the shape you drew is seen
+   * becoming the shape on the wheel rather than being replaced by it.
+   */
+  private updateHandoff(t: number): void {
+    if (!this.silTransform) return;
+    const e = t * t * (3 - 2 * t);
+    const from = this.barOffset;
+    this.silTransform.setLocalPosition(
+      new vec3(from.x * (1 - e), from.y * (1 - e), from.z * (1 - e)));
+    const widthScale = 1 + e * ((this.mesher.radiusScale * 2) / this.barSize.x - 1);
+    this.writeSilhouette(this.envelope, 1, 1 - e, widthScale);
+    if (this.progRoot) this.progRoot.enabled = false;
+  }
+
+  private setPreviewVisible(on: boolean): void {
+    if (this.silRoot) this.silRoot.enabled = on;
+    if (this.progRoot) this.progRoot.enabled = on;
+    if (on && this.silTransform) this.silTransform.setLocalPosition(this.barOffset);
   }
 
   private status(msg: string): void {

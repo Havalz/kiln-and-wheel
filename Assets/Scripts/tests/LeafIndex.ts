@@ -15,6 +15,8 @@ import {ShapingScenario} from "./ShapingScenario";
 import {GlazeFallbackScenario} from "./GlazeFallbackScenario";
 import {FiringScenario} from "./FiringScenario";
 import {PersistenceScenario} from "./PersistenceScenario";
+import {PingTestScenario} from "./PingTestScenario";
+import {AllHandlesScenario} from "./AllHandlesScenario";
 
 @component
 export class LeafIndex extends BaseScriptComponent {
@@ -23,6 +25,8 @@ export class LeafIndex extends BaseScriptComponent {
     {id: "wheel-shaping", typename: ShapingScenario.getTypeName()},
     {id: "wheel-glaze-fallback", typename: GlazeFallbackScenario.getTypeName()},
     {id: "wheel-firing", typename: FiringScenario.getTypeName()},
-    {id: "wheel-persistence", typename: PersistenceScenario.getTypeName()}
+    {id: "wheel-persistence", typename: PersistenceScenario.getTypeName()},
+    {id: "wheel-ping-test", typename: PingTestScenario.getTypeName()},
+    {id: "wheel-all-handles", typename: AllHandlesScenario.getTypeName()}
   ];
 }

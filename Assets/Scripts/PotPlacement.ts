@@ -28,6 +28,7 @@
 import {KilnStation} from "./KilnStation";
 import {WheelStudioUI} from "./WheelStudioUI";
 import {Interactable} from "SpectaclesInteractionKit.lspkg/Components/Interaction/Interactable/Interactable";
+import {isTap} from "./core/TapGesture";
 
 /** A hit steeper than this is a wall or ceiling, not something to stand a pot on. */
 const MAX_TILT_DEG = 25;
@@ -52,6 +53,10 @@ const PROBE_FORWARD_CM = 85;
  */
 const PROBE_DROP_MIN_CM = 20;
 const PROBE_DROP_MAX_CM = 95;
+/** Breathing room between the placed vessel and any station plate, in cm. */
+const PANEL_CLEAR_MARGIN_CM = 3.0;
+/** Separation passes; clearing one plate can nudge the pot into its neighbour. */
+const PANEL_CLEAR_PASSES = 4;
 
 @component
 export class PotPlacement extends BaseScriptComponent {
@@ -64,6 +69,14 @@ export class PotPlacement extends BaseScriptComponent {
   @allowUndefined
   @hint("Panel to report placement on. Without it the outcome only reaches the Logger.")
   ui: WheelStudioUI;
+
+  @input
+  @hint("TEMPORARY diagnostic: cast short raw rays and log every result unfiltered.")
+  runDepthProbeNow: boolean = false;
+
+  @input
+  @hint("TEMPORARY diagnostic: Physics.Probe raycast grid against scene COLLIDERS, not depth.")
+  runPhysicsProbeNow: boolean = false;
 
   @input
   @allowUndefined
@@ -94,6 +107,8 @@ export class PotPlacement extends BaseScriptComponent {
   private session: any = null;
   private placed = false;
   private grab: Interactable = null;
+  private pressTime = 0;
+  private pressPoint: vec3 = null;
   private probesLeft = 0;
   private probing = false;
   private awaitingCallback = false;
@@ -150,11 +165,16 @@ export class PotPlacement extends BaseScriptComponent {
     this.grab = host.createComponent(Interactable.getTypeName()) as Interactable;
     this.grab.targetingMode = 3; // Direct + Indirect: pinch on device, click in Editor.
 
-    // Release, not press, is what drops the pot. onTriggerEndOutside and
-    // onTriggerCanceled are bound too: letting go while the cursor has drifted
-    // off the pot is still letting go, and without them the pot would be stuck
-    // held with no way to drop it.
-    const drop = () => this.onReleased();
+    // A QUICK TAP IS NOT A DROP. Binding placement to onTriggerEnd alone made
+    // every ping test also fling the pot, because a tap and a placement end the
+    // same way. Press is recorded, release is classified, and only a held or
+    // dragged gesture places; see core/TapGesture.
+    this.grab.onTriggerStart.add((e: any) => this.onPressed(e));
+
+    // onTriggerEndOutside and onTriggerCanceled are bound too: letting go while
+    // the cursor has drifted off the pot is still letting go, and without them
+    // the pot would be stuck held with no way to drop it.
+    const drop = (e: any) => this.onReleased(e);
     this.grab.onTriggerEnd.add(drop);
     this.grab.onTriggerEndOutside.add(drop);
     this.grab.onTriggerCanceled.add(drop);
@@ -172,10 +192,36 @@ export class PotPlacement extends BaseScriptComponent {
     }
   }
 
-  private onReleased(): void {
+  private onPressed(e: any): void {
+    this.pressTime = getTime();
+    this.pressPoint = this.interactorPoint(e);
+  }
+
+  private onReleased(e: any): void {
     if (this.kiln && !this.kiln.isFired()) return;
-    print("[Place] released - dropping the piece.");
+
+    const held = this.pressTime > 0 ? getTime() - this.pressTime : 0;
+    const end = this.interactorPoint(e);
+    const travel = this.pressPoint && end ? this.pressPoint.distance(end) : 0;
+    this.pressTime = 0;
+
+    if (isTap({heldSeconds: held, travelCm: travel})) {
+      // Inspection only. The bell is played by WheelAudio off its own
+      // interactable; placement deliberately does nothing here.
+      print("[Place] tap (" + held.toFixed(2) + "s, " + travel.toFixed(1) +
+            "cm) - ping test, piece not moved.");
+      return;
+    }
+    print("[Place] released after " + held.toFixed(2) + "s / " +
+          travel.toFixed(1) + "cm - dropping the piece.");
     this.place();
+  }
+
+  /** Where the interactor is right now, for measuring gesture travel. */
+  private interactorPoint(e: any): vec3 {
+    const io = e && e.interactor ? e.interactor : null;
+    if (!io) return null;
+    return (io.startPoint as vec3) || (io.planecastPoint as vec3) || null;
   }
 
   // ── Public ────────────────────────────────────────────────────────────────
@@ -212,6 +258,14 @@ export class PotPlacement extends BaseScriptComponent {
   }
 
   private onUpdate(): void {
+    if (this.runDepthProbeNow) {
+      this.runDepthProbeNow = false;
+      this.depthProbe();
+    }
+    if (this.runPhysicsProbeNow) {
+      this.runPhysicsProbeNow = false;
+      this.physicsProbe();
+    }
     if (!this.probing || this.awaitingCallback) return;
     if (this.probesLeft <= 0) {
       this.probing = false;
@@ -220,6 +274,91 @@ export class PotPlacement extends BaseScriptComponent {
     }
     this.probesLeft--;
     this.probeOnce();
+  }
+
+  /**
+   * DIAGNOSTIC ONLY. Does anything in this scene carry a COLLIDER that
+   * Physics.Probe can hit? A completely different mechanism from WorldQuery:
+   * colliders, not depth.
+   *
+   * Casts a grid of long downward rays over the area in front of the user
+   * rather than guessing where the coffee table is. Our own objects - the pot,
+   * its grab capsule, the UI panels - do carry colliders, so a hit on one of
+   * those is a POSITIVE CONTROL proving the probe works; only then does the
+   * absence of environment hits mean the room has no colliders.
+   */
+  private physicsProbe(): void {
+    let probe: any = null;
+    try {
+      probe = (Physics as any).createGlobalProbe();
+    } catch (e) {
+      print("[Phys] could not create global probe: " + e);
+      return;
+    }
+    if (!probe) { print("[Phys] createGlobalProbe returned null"); return; }
+
+    const xs = [-40, 0, 40];
+    const zs = [-40, -70, -100, -130];
+    print("[Phys] casting " + (xs.length * zs.length) + " downward rays, y +50 -> -250");
+    for (let i = 0; i < xs.length; i++) {
+      for (let j = 0; j < zs.length; j++) {
+        const x = xs[i];
+        const z = zs[j];
+        const start = new vec3(x, 50, z);
+        const end = new vec3(x, -250, z);
+        probe.rayCast(start, end, (hit: any) => {
+          if (!hit) {
+            print("[Phys] (" + x + ", " + z + ") -> NULL");
+            return;
+          }
+          let who = "?";
+          try {
+            who = hit.collider ? hit.collider.getSceneObject().name : "(no collider ref)";
+          } catch (e) {}
+          print("[Phys] (" + x + ", " + z + ") -> HIT " + who +
+                " pos=" + hit.position + " normal=" + hit.normal);
+        });
+      }
+    }
+  }
+
+  /**
+   * DIAGNOSTIC ONLY. Does this scene answer WorldQuery at all? Casts a spread of
+   * short rays from the eye and logs every raw result with NO tilt filtering, so
+   * a null here means the query returned nothing rather than that we rejected a
+   * wall. If even a 30cm ray straight ahead is null, there is no depth to query
+   * and no amount of ray tuning will ever help.
+   */
+  private depthProbe(): void {
+    if (!this.session) { print("[Probe] no hit-test session"); return; }
+    if (!this.camera) { print("[Probe] no camera assigned"); return; }
+    const tr = this.camera.getTransform();
+    const eye = tr.getWorldPosition();
+    const rot = tr.getWorldRotation();
+    const view = rot.multiplyVec3(new vec3(0, 0, -1)).normalize();
+    const down = new vec3(0, -1, 0);
+    const start = eye.add(view.uniformScale(5));
+
+    print("[Probe] eye=" + eye + "  view=" + view);
+    const cases: {name: string; end: vec3}[] = [
+      {name: "fwd 30cm ", end: eye.add(view.uniformScale(30))},
+      {name: "fwd 60cm ", end: eye.add(view.uniformScale(60))},
+      {name: "fwd 120cm", end: eye.add(view.uniformScale(120))},
+      {name: "fwd 300cm", end: eye.add(view.uniformScale(300))},
+      {name: "down 60cm", end: eye.add(down.uniformScale(60))},
+      {name: "fwd60+dn30", end: eye.add(view.uniformScale(60)).add(down.uniformScale(30))},
+      {name: "fwd85+dn45", end: eye.add(view.uniformScale(85)).add(down.uniformScale(45))}
+    ];
+    for (let i = 0; i < cases.length; i++) {
+      const c = cases[i];
+      this.session.hitTest(start, c.end, (r: any) => {
+        if (!r) {
+          print("[Probe] " + c.name + " -> NULL");
+        } else {
+          print("[Probe] " + c.name + " -> HIT pos=" + r.position + " normal=" + r.normal);
+        }
+      });
+    }
   }
 
   /**
@@ -274,8 +413,9 @@ export class PotPlacement extends BaseScriptComponent {
    * with a slight slope, and matching a noisy normal makes it look drunk.
    */
   private snapUpright(position: vec3): void {
+    const safe = this.pushClearOfPanels(position);
     const tr = this.pot.getTransform();
-    tr.setWorldPosition(position);
+    tr.setWorldPosition(safe);
     tr.setWorldRotation(quat.quatIdentity());
     // True real-world scale: the lathe already builds in centimetres, so the
     // pot is its authored size and must not be rescaled to "fit".
@@ -284,6 +424,67 @@ export class PotPlacement extends BaseScriptComponent {
     // throwing affordance and it has no meaning once the piece is in the room.
     if (this.spin) this.spin.enabled = false;
     this.placed = true;
+  }
+
+  /**
+   * NO VESSEL SLICED BY A UI PLATE. Every placement path funnels through
+   * snapUpright, so the guard lives here rather than at each call site.
+   *
+   * The pot is treated as an upright box (its grab capsule's footprint) and
+   * tested against each station plate's own mesh bounds - the visible plate,
+   * not its interaction volume, which is far larger and would shove the pot
+   * needlessly far. On an overlap the pot slides HORIZONTALLY away from that
+   * panel's centre by just enough to separate, plus a margin. Horizontal
+   * because the panels ring the user: sideways or toward them is always open
+   * space, whereas lifting the pot would leave it hanging in mid-air.
+   */
+  private pushClearOfPanels(position: vec3): vec3 {
+    if (!this.ui) return position;
+    const panels = this.ui.getPanelRoots();
+    if (!panels || panels.length === 0) return position;
+
+    let px = position.x;
+    let pz = position.z;
+    const halfW = this.grabRadius + PANEL_CLEAR_MARGIN_CM;
+    const yLo = position.y;
+    const yHi = position.y + this.grabHeight;
+
+    // A few passes: clearing one panel can nudge the pot into its neighbour.
+    for (let pass = 0; pass < PANEL_CLEAR_PASSES; pass++) {
+      let moved = false;
+      for (let i = 0; i < panels.length; i++) {
+        const vis = panels[i].getComponent("Component.RenderMeshVisual") as RenderMeshVisual;
+        if (!vis) continue;
+        const lo = vis.worldAabbMin();
+        const hi = vis.worldAabbMax();
+
+        // Vertical miss means no overlap at all, whatever the footprint does.
+        if (yHi < lo.y || yLo > hi.y) continue;
+
+        const overlapX = Math.min(px + halfW, hi.x) - Math.max(px - halfW, lo.x);
+        const overlapZ = Math.min(pz + halfW, hi.z) - Math.max(pz - halfW, lo.z);
+        if (overlapX <= 0 || overlapZ <= 0) continue;
+
+        // Separate along whichever horizontal axis needs the least travel.
+        const cx = (lo.x + hi.x) * 0.5;
+        const cz = (lo.z + hi.z) * 0.5;
+        if (overlapX < overlapZ) {
+          px += px >= cx ? overlapX : -overlapX;
+        } else {
+          pz += pz >= cz ? overlapZ : -overlapZ;
+        }
+        moved = true;
+      }
+      if (!moved) break;
+    }
+
+    if (px !== position.x || pz !== position.z) {
+      print("[Place] panel guard moved the piece from x=" + position.x.toFixed(1) +
+            " z=" + position.z.toFixed(1) + " to x=" + px.toFixed(1) +
+            " z=" + pz.toFixed(1) + " to keep it clear of the plates.");
+      return new vec3(px, position.y, pz);
+    }
+    return position;
   }
 
   /** One short sentence on the panel. Never the reason string - that is log detail. */

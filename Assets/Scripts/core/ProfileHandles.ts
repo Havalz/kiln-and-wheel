@@ -29,6 +29,7 @@ import {Interactable} from "SpectaclesInteractionKit.lspkg/Components/Interactio
 import {InteractorEvent} from "SpectaclesInteractionKit.lspkg/Core/Interactor/InteractorEvent";
 
 import {CONTROL_POINTS, ProfileModel} from "./ProfileModel";
+import type {ProfilePoint} from "./ProfileModel";
 import {LatheMesher} from "./LatheMesher";
 import {ProfileUndoStack} from "./ProfileUndoStack";
 
@@ -48,7 +49,20 @@ const MIN_Y_GAP = 0.005;
  * again). Slightly wider than the 1-unit sphere mesh so the grab volume is a
  * little more forgiving than the dot the user sees.
  */
-const GRAB_RADIUS_LOCAL = 1.35;
+/**
+ * Grab sphere radius in the handle's LOCAL units, multiplied again by the
+ * object's own scale. Generous on purpose: a control you have to aim at
+ * precisely is a control you fight.
+ */
+/** Rows in the drag-time segment highlight. */
+const SEG_ROWS = 20;
+/** How far the highlight floats off the surface so it never z-fights, in cm. */
+const SEG_LIFT_CM = 0.35;
+/** Width of the highlight band and of a leader line, in cm. */
+const SEG_BAND_CM = 0.9;
+const LEADER_W_CM = 0.28;
+
+const GRAB_RADIUS_LOCAL = 2.3;
 
 /** Per-handle runtime state. */
 class Handle {
@@ -64,11 +78,18 @@ class Handle {
   /** Smoothed scale multiplier, eased toward the hover/rest target. */
   scaleMul = 1;
 
+  /** Thin leader line from the point on the form back to its offset grip. */
+  leader: SceneObject = null;
+  leaderTransform: Transform = null;
+  leaderMat: Material = null;
+
   // Grab bookkeeping, valid only while held.
   activeInteractor: any = null;
   grabLocal: vec3 = vec3.zero();
   grabY = 0;
   grabR = 0;
+  /** Distance from the interactor's ray locus to the handle at grab time. */
+  grabDist = 0;
 }
 
 @component
@@ -84,16 +105,25 @@ export class ProfileHandles extends BaseScriptComponent {
   handleMaterial: Material;
 
   @input
+  @hint("TEMPORARY: dump every handle's state and ray-test what occludes it. Auto-clears.")
+  runHandleDiagnosticsNow: boolean = false;
+
+  @input
+  @hint("Hand travel to profile change. 1.0 is literal 1:1 - a centimetre of hand is a centimetre of radius - which proved too twitchy to dial in a subtle curve. Half of that still tracks the hand directly without flinging the profile across its whole range.")
+  @widget(new SliderWidget(0.15, 1.5, 0.05))
+  dragSensitivity: number = 0.5;
+
+  @input
   @hint("Handle sphere radius in centimetres.")
-  handleRadius: number = 0.9;
+  handleRadius: number = 1.15;
 
   @input
   @hint("Scale multiplier applied while a handle is hovered.")
-  hoverScale: number = 1.55;
+  hoverScale: number = 1.9;
 
   @input
   @hint("Centimetres to float each handle outward past the surface, so it is grabbable instead of half-buried in the mesh.")
-  handleOffset: number = 1.8;
+  handleOffset: number = 4.2;
 
   @input
   @hint("Print hover/grab events to the Logger panel. For manual pinch testing in the simulator; leave off in normal use.")
@@ -109,6 +139,10 @@ export class ProfileHandles extends BaseScriptComponent {
   private readonly handles: Handle[] = [];
   private heldCount = 0;
   private warned = false;
+  private segBuilder: MeshBuilder = null;
+  private segObject: SceneObject = null;
+  private segMat: Material = null;
+  private readonly segVtx: number[] = [0, 0, 0, 0, 0, 1, 0, 0];
   private editable = true;
 
   onAwake(): void {
@@ -158,7 +192,11 @@ export class ProfileHandles extends BaseScriptComponent {
     this.editable = editable;
     for (let i = 0; i < this.handles.length; i++) {
       this.handles[i].object.enabled = editable;
+      // The leader belongs to its grip: a fired piece has no controls, so it
+      // must not be left with orphan lines pointing at nothing.
+      if (this.handles[i].leader) this.handles[i].leader.enabled = editable;
     }
+    if (this.segObject && !editable) this.segObject.enabled = false;
     if (!editable && this.heldCount > 0) {
       this.heldCount = 0;
       this.mesher.setDragging(false);
@@ -265,14 +303,81 @@ export class ProfileHandles extends BaseScriptComponent {
       h.interactable = h.object.createComponent(Interactable.getTypeName()) as Interactable;
       h.interactable.targetingMode = 3; // Direct + Indirect: pinch on device, click in Editor.
 
+      h.leader = global.scene.createSceneObject("HandleLeader_" + i);
+      h.leader.setParent(this.rig);
+      h.leaderTransform = h.leader.getTransform();
+      const lv = h.leader.createComponent("Component.RenderMeshVisual") as RenderMeshVisual;
+      lv.mesh = this.unitQuad();
+      h.leaderMat = this.handleMaterial.clone();
+      lv.clearMaterials();
+      lv.addMaterial(h.leaderMat);
+
       this.handles.push(h);
     }
+    this.buildSegment();
 
     // SIK events bind in OnStartEvent only. buildHandles() is already called
     // from OnStartEvent, so binding inline here is correct.
     for (let i = 0; i < this.handles.length; i++) {
       this.bindHandle(this.handles[i]);
     }
+  }
+
+  /**
+   * A 1x1 quad on the XY plane with its origin at the LEFT edge, so scaling X
+   * grows it along its own length from the anchored end.
+   */
+  private unitQuad(): RenderMesh {
+    const b = new MeshBuilder([
+      {name: "position", components: 3},
+      {name: "normal", components: 3},
+      {name: "texture0", components: 2}
+    ]);
+    b.topology = MeshTopology.Triangles;
+    b.indexType = MeshIndexType.UInt16;
+    b.appendVerticesInterleaved([
+      0, -0.5, 0,  0, 0, 1,  0, 0,
+      1, -0.5, 0,  0, 0, 1,  1, 0,
+      0,  0.5, 0,  0, 0, 1,  0, 1,
+      1,  0.5, 0,  0, 0, 1,  1, 1
+    ]);
+    b.appendIndices([0, 1, 2, 2, 1, 3]);
+    b.updateMesh();
+    return b.getMesh();
+  }
+
+  /**
+   * The stretch of silhouette a handle owns: from the midpoint to its lower
+   * neighbour up to the midpoint to its upper one. Shown only while dragging,
+   * so the user can see WHICH part of the form is answering the hand.
+   */
+  private buildSegment(): void {
+    this.segBuilder = new MeshBuilder([
+      {name: "position", components: 3},
+      {name: "normal", components: 3},
+      {name: "texture0", components: 2}
+    ]);
+    this.segBuilder.topology = MeshTopology.Triangles;
+    this.segBuilder.indexType = MeshIndexType.UInt16;
+    const zeros: number[] = new Array(SEG_ROWS * 2 * 8);
+    for (let i = 0; i < zeros.length; i++) zeros[i] = 0;
+    this.segBuilder.appendVerticesInterleaved(zeros);
+    const idx: number[] = [];
+    for (let r = 0; r < SEG_ROWS - 1; r++) {
+      const a = r * 2;
+      idx.push(a, a + 1, a + 2);
+      idx.push(a + 2, a + 1, a + 3);
+    }
+    this.segBuilder.appendIndices(idx);
+
+    this.segObject = global.scene.createSceneObject("HandleSegment");
+    this.segObject.setParent(this.rig);
+    const v = this.segObject.createComponent("Component.RenderMeshVisual") as RenderMeshVisual;
+    v.mesh = this.segBuilder.getMesh();
+    this.segMat = this.handleMaterial.clone();
+    v.clearMaterials();
+    v.addMaterial(this.segMat);
+    this.segObject.enabled = false;
   }
 
   private bindHandle(h: Handle): void {
@@ -305,12 +410,29 @@ export class ProfileHandles extends BaseScriptComponent {
    * indirect targeting. Preferring whichever is non-null avoids branching on
    * isEditor(), which would pick wrong when a simulated hand drives preview.
    */
-  private interactorPoint(io: any): vec3 {
+  /**
+   * WHY THIS IS NOT JUST `io.startPoint`. For the indirect (far-field)
+   * interactor - the one you use to grab a handle at arm's length -
+   * `startPoint` is the ray's LOCUS, which SIK anchors near the shoulder. When
+   * the hand moves, the ray SWEEPS but the locus barely translates, so reading
+   * startPoint gave a drag delta a small fraction of the actual hand travel:
+   * the handle crawled and shaping felt damped. Re-projecting the ray out to
+   * the distance the handle was grabbed at recovers a point that moves with the
+   * hand, which is what makes the handle feel stuck to your fingers.
+   */
+  private interactorPoint(io: any, h: Handle): vec3 {
     if (!io) {
       return null;
     }
-    if (io.startPoint) {
-      return io.startPoint;
+    const start = io.startPoint as vec3;
+    const dir = io.direction as vec3;
+    if (start && dir && h && h.grabDist > 0) {
+      return start.add(dir.uniformScale(h.grabDist));
+    }
+    // Direct/poke interactors put startPoint on the fingertip, where it already
+    // tracks the hand; the planecast is the last resort.
+    if (start) {
+      return start;
     }
     if (io.planecastPoint) {
       return io.planecastPoint;
@@ -330,6 +452,75 @@ export class ProfileHandles extends BaseScriptComponent {
    * Keep the rig on the vessel's world position but never rotated with it, so
    * the handles hold station while the lathe turns underneath.
    */
+  /**
+   * TEMPORARY DIAGNOSTIC. Dumps every handle's real state and, for each one,
+   * ray casts from the camera to the handle centre and reports what the ray
+   * meets FIRST. If the pot's own collider is in front of a handle, that handle
+   * cannot be pinched no matter how healthy its own collider looks.
+   */
+  private runDiagnostics(): void {
+    const cam = this.findCamera();
+    if (!cam) {
+      print("[HDIAG] no camera found - skipping occlusion test.");
+    }
+    const eye = cam ? cam.getTransform().getWorldPosition() : null;
+    const probe = Physics.createGlobalProbe();
+    const pts = this.model.getPoints();
+
+    print("[HDIAG] ---- handle state, radiusScale=" +
+          this.mesher.radiusScale.toFixed(2) + " height=" +
+          this.mesher.height.toFixed(2) + " ----");
+
+    for (let i = 0; i < this.handles.length; i++) {
+      const h = this.handles[i];
+      const wp = h.transform.getWorldPosition();
+      const scl = h.transform.getWorldScale();
+      const effR = GRAB_RADIUS_LOCAL * scl.x;
+      const surfaceR = pts[i].r * this.mesher.radiusScale;
+      print("[HDIAG] H" + i +
+            " pos=(" + wp.x.toFixed(2) + "," + wp.y.toFixed(2) + "," + wp.z.toFixed(2) + ")" +
+            " objEnabled=" + h.object.enabled +
+            " interEnabled=" + h.interactable.enabled +
+            " mode=" + h.interactable.targetingMode +
+            " grabR=" + effR.toFixed(2) +
+            " surfaceR=" + surfaceR.toFixed(2) +
+            " clearance=" + (Math.sqrt(wp.x * wp.x + (wp.z + 45) * (wp.z + 45)) - surfaceR).toFixed(2));
+
+      if (!eye) continue;
+      probe.rayCastAll(eye, wp, (hits: RayCastHit[]) => {
+        let line = "[HDIAG] H" + i + " ray hits:";
+        if (!hits || hits.length === 0) {
+          line += " NONE";
+        } else {
+          for (let k = 0; k < hits.length && k < 4; k++) {
+            const o = hits[k].collider ? hits[k].collider.getSceneObject() : null;
+            line += " " + (k + 1) + ")" + (o ? o.name : "?") +
+                    "@" + hits[k].position.distance(eye).toFixed(1);
+          }
+        }
+        print(line);
+      });
+    }
+  }
+
+  private findCamera(): SceneObject {
+    const n = global.scene.getRootObjectsCount();
+    for (let i = 0; i < n; i++) {
+      const found = this.searchCamera(global.scene.getRootObject(i));
+      if (found) return found;
+    }
+    return null;
+  }
+
+  private searchCamera(obj: SceneObject): SceneObject {
+    if (obj.getComponent("Component.Camera")) return obj;
+    for (let i = 0; i < obj.getChildrenCount(); i++) {
+      const found = this.searchCamera(obj.getChild(i));
+      if (found) return found;
+    }
+    return null;
+  }
+
   private syncRig(): void {
     const lathe = this.sceneObject.getTransform();
     this.rigTransform.setWorldPosition(lathe.getWorldPosition());
@@ -340,7 +531,13 @@ export class ProfileHandles extends BaseScriptComponent {
     if (h.held || !this.editable) {
       return;
     }
-    const world = this.interactorPoint(e.interactor);
+    // Measure the grab distance BEFORE sampling, since the sample depends on it.
+    const locus = e.interactor ? (e.interactor.startPoint as vec3) : null;
+    h.grabDist = locus
+      ? h.transform.getWorldPosition().distance(locus)
+      : 0;
+
+    const world = this.interactorPoint(e.interactor, h);
     if (!world) {
       return;
     }
@@ -379,21 +576,107 @@ export class ProfileHandles extends BaseScriptComponent {
       return;
     }
 
+    if (this.runHandleDiagnosticsNow) {
+      this.runHandleDiagnosticsNow = false;
+      this.runDiagnostics();
+    }
+
     // Cheap no-op while the vessel stays put; keeps the handles attached if it
     // is ever repositioned.
     this.syncRig();
 
+    let dragging = -1;
     for (let i = 0; i < this.handles.length; i++) {
       const h = this.handles[i];
       if (h.held) {
         this.dragHandle(h);
+        dragging = i;
       }
       this.updateAppearance(h);
+      this.updateLeader(h);
+    }
+    this.updateSegment(dragging);
+  }
+
+  /**
+   * The grip floats well clear of the form, so a leader line ties it back to
+   * the point it actually controls - otherwise an offset dot is ambiguous about
+   * which part of the profile it moves.
+   */
+  private updateLeader(h: Handle): void {
+    if (!h.leaderTransform) return;
+    const pts = this.model.getPoints();
+    const surfaceR = pts[h.index].r * this.mesher.radiusScale;
+    const y = pts[h.index].y * this.mesher.height;
+    const len = Math.max(0.01, this.handleOffset);
+
+    h.leaderTransform.setLocalPosition(new vec3(surfaceR, y, 0));
+    h.leaderTransform.setLocalScale(new vec3(len, LEADER_W_CM, 1));
+
+    const hot = h.hovered || h.held;
+    const a = hot ? 1.0 : 0.42;
+    if (h.leaderMat) {
+      h.leaderMat.mainPass.baseColor = new vec4(0.35 * a, 0.9 * a, 1.0 * a, a);
     }
   }
 
+  /** Light up the stretch of silhouette the dragged handle owns. */
+  private updateSegment(index: number): void {
+    if (!this.segObject) return;
+    if (index < 0) {
+      this.segObject.enabled = false;
+      return;
+    }
+    this.segObject.enabled = true;
+
+    const pts = this.model.getPoints();
+    const samples = this.model.getSamples();
+    const height = this.mesher.height;
+    const radiusScale = this.mesher.radiusScale;
+
+    // Midpoint to each neighbour: the honest extent of this handle's influence.
+    const lo = index > 0 ? (pts[index - 1].y + pts[index].y) * 0.5 : 0;
+    const hi = index < CONTROL_POINTS - 1
+      ? (pts[index].y + pts[index + 1].y) * 0.5 : 1;
+
+    const v = this.segVtx;
+    for (let r = 0; r < SEG_ROWS; r++) {
+      const t = SEG_ROWS > 1 ? r / (SEG_ROWS - 1) : 0;
+      const yn = lo + (hi - lo) * t;
+      const rad = this.sampleRadius(samples, yn) * radiusScale + SEG_LIFT_CM;
+      const y = yn * height;
+      v[1] = y; v[2] = 0; v[3] = 0; v[4] = 0; v[5] = 1; v[7] = t;
+      v[0] = rad; v[6] = 0;
+      this.segBuilder.setVertexInterleaved(r * 2, v);
+      // A flat ribbon standing in the profile plane, a little wider than the
+      // leader so it reads as a band on the form rather than another line.
+      v[0] = rad + SEG_BAND_CM; v[6] = 1;
+      this.segBuilder.setVertexInterleaved(r * 2 + 1, v);
+    }
+    if (this.segBuilder.isValid()) this.segBuilder.updateMesh();
+    if (this.segMat) {
+      this.segMat.mainPass.baseColor = new vec4(1.0, 0.82, 0.25, 1.0);
+    }
+  }
+
+  /** Profile radius at a normalised height, from the resampled curve. */
+  private sampleRadius(samples: ProfilePoint[], yn: number): number {
+    const n = samples.length;
+    if (n === 0) return 0;
+    if (yn <= samples[0].y) return samples[0].r;
+    if (yn >= samples[n - 1].y) return samples[n - 1].r;
+    for (let i = 1; i < n; i++) {
+      if (yn <= samples[i].y) {
+        const span = samples[i].y - samples[i - 1].y;
+        const k = span > 1e-6 ? (yn - samples[i - 1].y) / span : 0;
+        return samples[i - 1].r + (samples[i].r - samples[i - 1].r) * k;
+      }
+    }
+    return samples[n - 1].r;
+  }
+
   private dragHandle(h: Handle): void {
-    const world = this.interactorPoint(h.activeInteractor);
+    const world = this.interactorPoint(h.activeInteractor, h);
     if (!world) {
       return;
     }
@@ -410,8 +693,9 @@ export class ProfileHandles extends BaseScriptComponent {
 
     // Delta in the lathe's own space: local X is radius, local Y is height.
     const local = this.toLocal(world);
-    const dx = local.x - h.grabLocal.x;
-    const dy = local.y - h.grabLocal.y;
+    const k = this.dragSensitivity > 0 ? this.dragSensitivity : 1;
+    const dx = (local.x - h.grabLocal.x) * k;
+    const dy = (local.y - h.grabLocal.y) * k;
 
     let r = h.grabR + dx / radiusScale;
     r = r < MIN_RADIUS ? MIN_RADIUS : r > MAX_RADIUS ? MAX_RADIUS : r;
@@ -449,9 +733,11 @@ export class ProfileHandles extends BaseScriptComponent {
     // waveguide display black renders as transparent, so dark values vanish.
     const lift = h.scaleMul - 1;
     const t = this.hoverScale > 1 ? lift / (this.hoverScale - 1) : 0;
+    // Hover reads on BOTH channels at once - it grows and it lights up - so it
+    // is unmistakable at a glance even when the grip is small in the frame.
     h.material.mainPass.baseColor = new vec4(
-      0.0 + 0.75 * t,
-      0.85 + 0.15 * t,
+      0.05 + 0.95 * t,
+      0.80 + 0.20 * t,
       1.0,
       1.0
     );

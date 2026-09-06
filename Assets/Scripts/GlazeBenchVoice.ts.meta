@@ -30,6 +30,13 @@
   ScriptInputsHidden:
     geminiModel: false
     glazeMaterial: false
+    holdBeat: false
+    holdPulseNow: false
+    micColor: false
+    micSensitivity: false
+    microphone: false
+    pulseMaterial: false
+    ringColor: false
     runTypedGlaze: false
     timeoutSeconds: false
     transitionSeconds: false
@@ -48,6 +55,13 @@
       glazeMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
       typedGlaze: a dark iron tenmoku that breaks rust at the rim
       runTypedGlaze: false
+      microphone: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      pulseMaterial: !<reference.Material> 00000000-0000-0000-0000-000000000000
+      micColor: !<Vec4> {x: 0.420000, y: 1.000000, z: 0.860000, w: 1.000000}
+      ringColor: !<Vec4> {x: 0.300000, y: 0.860000, z: 1.000000, w: 1.000000}
+      micSensitivity: !<float> 12.000000
+      holdPulseNow: false
+      holdBeat: !<float> 1.000000
       geminiModel: gemini-2.5-flash
       timeoutSeconds: !<float> 20.000000
       transitionSeconds: 1.200000
@@ -62,6 +76,15 @@
     - '// @ui {"widget":"group_start", "label":"Editor fallback (no mic in preview)"}'
     - '// @input string typedGlaze = "a dark iron tenmoku that breaks rust at the rim" {"hint":"Type a glaze description here, then tick Run Typed Glaze. Runs the identical Gemini path as speaking."}'
     - '// @input bool runTypedGlaze {"hint":"Tick to send the typed description on the next frame. Auto-clears."}'
+    - '// @ui {"widget":"group_end"}'
+    - '// @ui {"widget":"group_start", "label":"Live mic pulse"}'
+    - '// @input Asset.AudioTrackAsset microphone {"hint":"Microphone AudioTrackAsset. ASR returns transcripts, never levels, so the pulse needs its own source. Without it the pulse is skipped and the No-microphone state stands."}'
+    - '// @input Asset.Material pulseMaterial {"hint":"Unlit ADDITIVE material with ENABLE_BASE_TEX on (HeatRingMat works). Without it the pulse is built but never drawn."}'
+    - '// @input vec4 micColor = {0.42,1,0.86,1} {"hint":"Mic core colour. Bright and saturated: on the waveguide it has to add light.", "widget":"color"}'
+    - '// @input vec4 ringColor = {0.3,0.86,1,1} {"hint":"Colour of the rings radiating out from the mic.", "widget":"color"}'
+    - '// @input float micSensitivity = 12 {"hint":"Multiplies raw microphone RMS before shaping. Raw levels sit near zero; this puts speech across the usable range. Raise if the core barely moves, lower if it pins wide open.", "widget":"slider", "min":1, "max":40, "step":0.5}'
+    - '// @input bool holdPulseNow {"hint":"Hold the pulse on screen so a beat can be inspected or captured without speaking. Listening clears it."}'
+    - '// @input float holdBeat = 1 {"hint":"Which beat to hold: 1 speaking, 2 working, 3 resolving.", "widget":"slider", "min":1, "max":3, "step":1}'
     - '// @ui {"widget":"group_end"}'
     - '// @ui {"widget":"group_start", "label":"Model"}'
     - '// @input string geminiModel = "gemini-2.5-flash" {"hint":"Gemini model id. Known-good through RSG: gemini-2.0-flash, gemini-2.5-flash, gemini-2.5-pro."}'
