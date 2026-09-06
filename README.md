@@ -30,6 +30,23 @@ A spatial ceramics studio for Snap Spectacles: throw a pot with your voice, shap
 
 ---
 
+**The export loop, closed.** The left half is what the Lens produces; the right
+half is what a phone does with it.
+
+| Generated inside the Lens | Rebuilt in a phone browser |
+|---|---|
+| <img src="docs/screenshots/04a-qr-in-lens.jpg" alt="QR code rendered on the bench the moment a firing completes" width="100%"> | <img src="docs/screenshots/04b-decoder-phone.jpg" alt="The companion page rebuilding a vessel in mobile Safari" width="100%"> |
+| Firing completes and the Lens packs the finished vessel into 35 bytes, renders the QR itself — no QR library — and captions it *"Scan to open your pot in 3D"*. | Scanning opens `havalz.github.io` and rebuilds the silhouette from the URL fragment alone — **Quiet Bowl, Morning · 22.0 cm tall · 14.8 cm across · seed 2803667292** — ready to download as STL or OBJ. |
+
+*(Two different pieces, photographed separately: the QR on the left encodes seed
+2113740935, the phone on the right shows an earlier firing.)*
+
+Nothing is uploaded and nothing is stored. The whole vessel travels in the link,
+which is why the page needs no server, no account and no database — and why the
+same URL will still open the same pot years from now.
+
+---
+
 ## How it works
 
 **Runtime lathe, allocate-once.** Every vessel is generated at runtime — there are no authored meshes. Eight control points are Catmull-Rom resampled to 48 profile samples and revolved through `MeshBuilder`. Vertex and index buffers are appended exactly once per LOD; an edit rewrites vertex data in place and calls `updateMesh()`. Two LODs swap on drag state: 48 radial segments at rest, 16 while a handle is moving, so dragging stays responsive without giving up a smooth silhouette when you let go.
