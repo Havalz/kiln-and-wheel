@@ -6,6 +6,8 @@ A spatial ceramics studio for Snap Spectacles: throw a pot with your voice, shap
 
 **Companion decoder:** <https://havalz.github.io/kiln-and-wheel/> — scan a pot's QR, or open the link, to view and export the piece as STL or OBJ. No account, no server, no database.
 
+**[📓 CLAD prompt log](prompt-log/CLAD_PROMPT_LOG.md)** — the complete prompt-by-prompt build record, including what failed and how it was corrected.
+
 ---
 
 ## The loop
@@ -64,6 +66,11 @@ same URL will still open the same pot years from now.
 ---
 
 ## Built with CLAD
+
+> The table below is the summary. The full iteration record behind it lives in
+> **[`prompt-log/CLAD_PROMPT_LOG.md`](prompt-log/CLAD_PROMPT_LOG.md)** — every phase
+> prompt by prompt, weighted toward what broke and how each failure was closed so
+> it could not recur.
 
 | Skill / agent | What it did |
 |---|---|
