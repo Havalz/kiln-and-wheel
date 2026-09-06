@@ -1,6 +1,6 @@
 # WHEEL
 
-A spatial ceramics studio for Snap Spectacles: throw a pot with your voice, shape it with your hands, glaze it by describing it out loud, fire it, and carry it out as a QR code that opens the finished vessel in any browser.
+A spatial ceramics studio for Snap Spectacles (SPECS): throw a pot with your voice, shape it with your hands, glaze it by describing it out loud, fire it, and carry it out as a QR code that opens the finished vessel in any browser.
 
 **[▶ Watch the demo video](https://drive.google.com/file/d/1urlJZoVyDap54IbvJ_SZaNndd7McSsNT/view?usp=sharing)**
 
